@@ -397,6 +397,7 @@
       }
       .canvas-wrapper canvas {
         max-width: 100%;
+        height: auto;
         display: block;
       }
 
@@ -1030,9 +1031,8 @@
       let manualCropRect = null;
       let dragController = null;
 
-      // Semak Web Share API dengan sokongan fail
-      const shareSupported = !!(navigator.share && navigator.canShare &&
-        navigator.canShare({ files: [new File([""], "t.png", { type: "image/png" })] }));
+      // Tunjuk butang kongsi pada peranti yang ada navigator.share (iOS Safari, Android Chrome)
+      const shareSupported = !!navigator.share;
       if (shareSupported) document.getElementById("btnShare").style.display = "";
 
       // ── Helpers ──
@@ -1114,14 +1114,13 @@
 
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
           const page = await pdf.getPage(1);
-          const dpr = window.devicePixelRatio || 1;
-          const scale = dpr * 3;
+          const scale = 3;
           const viewport = page.getViewport({ scale });
 
           const canvas = document.getElementById("pdfCanvas");
           canvas.width = viewport.width;
           canvas.height = viewport.height;
-          canvas.style.width = (viewport.width / scale) * 2.5 + "px";
+          canvas.style.width = "100%";
           canvas.style.height = "auto";
 
           await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
@@ -1481,12 +1480,22 @@
       }
 
       async function shareImage() {
-        if (!currentCanvas) return;
-        const filename = "sheet-" + new Date().toISOString().slice(0, 10) + ".png";
+        if (!currentCanvas || !navigator.share) return;
+        const datestamp = new Date().toISOString().slice(0, 10);
         try {
-          const blob = await new Promise((res) => currentCanvas.toBlob(res, "image/png"));
-          const file = new File([blob], filename, { type: "image/png" });
-          await navigator.share({ files: [file] });
+          // JPEG untuk saiz fail lebih kecil — penting pada mobile
+          const blob = await new Promise((res) =>
+            currentCanvas.toBlob(res, "image/jpeg", 0.92)
+          );
+          if (!blob) { showToast("Gagal jana gambar", true); return; }
+          const file = new File([blob], `sheet-${datestamp}.jpg`, { type: "image/jpeg" });
+          const shareData = { files: [file] };
+          // canShare semak dalam user gesture context — lebih dipercayai pada iOS
+          if (navigator.canShare && !navigator.canShare(shareData)) {
+            showToast("Peranti tidak sokong kongsi fail", true);
+            return;
+          }
+          await navigator.share(shareData);
         } catch (err) {
           if (err.name !== "AbortError") showToast("Gagal kongsi gambar", true);
         }
