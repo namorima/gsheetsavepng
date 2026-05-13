@@ -1,0 +1,1535 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sheet Viewer</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap");
+
+      :root {
+        --bg: #0f0f0f;
+        --surface: #1a1a1a;
+        --border: #2a2a2a;
+        --accent: #00e5a0;
+        --accent-dim: #00e5a018;
+        --text: #e8e8e8;
+        --text-dim: #555;
+        --danger: #ff4d4d;
+        --radius: 6px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 28px 16px 60px;
+      }
+
+      header {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .logo {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 4px 12px;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        transition: all 0.3s;
+        flex-shrink: 0;
+      }
+      .status-dot.active {
+        background: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+      }
+      .status-dot.error {
+        background: var(--danger);
+      }
+
+      .status-text {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+      }
+
+      .main {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .url-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+      }
+
+      .crop-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .sec-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .url-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .url-input {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 13px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .url-input:focus {
+        border-color: var(--accent);
+      }
+      .url-input::placeholder {
+        color: var(--text-dim);
+      }
+
+      .btn-load {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        border-radius: var(--radius);
+        padding: 9px 18px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+      .btn-load:hover {
+        opacity: 0.85;
+      }
+      .btn-load:active {
+        transform: scale(0.97);
+      }
+      .btn-load:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Crop */
+      .crop-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+      }
+      .crop-header:hover {
+        background: #222;
+      }
+
+      .crop-chevron {
+        width: 14px;
+        height: 14px;
+        color: var(--text-dim);
+        transition: transform 0.22s ease;
+        flex-shrink: 0;
+      }
+      .crop-section.open .crop-chevron {
+        transform: rotate(180deg);
+      }
+
+      .crop-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+      }
+      .crop-section.open .crop-body {
+        max-height: 500px;
+      }
+
+      .crop-body-inner {
+        padding: 0 14px 14px;
+        border-top: 1px solid var(--border);
+      }
+
+      .crop-tabs {
+        display: flex;
+        gap: 6px;
+      }
+
+      .tab-btn {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 5px 12px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .tab-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #000;
+        font-weight: 600;
+      }
+
+      .auto-crop-panel {
+        display: none;
+      }
+      .auto-crop-panel.visible {
+        display: block;
+      }
+      .manual-crop-panel {
+        display: none;
+      }
+      .manual-crop-panel.visible {
+        display: block;
+      }
+
+      .crop-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .crop-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .crop-field label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .crop-input {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        outline: none;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .crop-input:focus {
+        border-color: var(--accent);
+      }
+      .crop-input::placeholder {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .crop-hint {
+        font-size: 11px;
+        color: var(--text-dim);
+        line-height: 1.5;
+      }
+
+      .crop-presets {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        align-items: center;
+      }
+
+      .preset-btn {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 4px 10px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .preset-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .manual-hint {
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+      .manual-hint strong {
+        color: var(--accent);
+      }
+
+      .crop-coords {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .coord-badge {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        border: 1px solid #00e5a030;
+        border-radius: 4px;
+        padding: 4px 10px;
+      }
+
+      .btn-apply-crop {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        margin-left: auto;
+      }
+      .btn-apply-crop:hover {
+        opacity: 0.85;
+      }
+      .btn-apply-crop:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .btn-reset-crop {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-reset-crop:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      /* Canvas */
+      .canvas-wrapper {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        position: relative;
+        min-height: 280px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .canvas-wrapper canvas {
+        max-width: 100%;
+        display: block;
+      }
+
+      .placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 60px 20px;
+        color: var(--text-dim);
+      }
+      .placeholder-icon {
+        width: 44px;
+        height: 44px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+      .placeholder p {
+        font-size: 12px;
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--surface);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      .canvas-crop-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+      }
+
+      #selectionBox {
+        position: absolute;
+        border: 2px solid var(--accent);
+        background: rgba(0, 229, 160, 0.08);
+        pointer-events: none;
+        display: none;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+      }
+
+      .img-preview-container {
+        width: 100%;
+        display: none;
+      }
+
+      .info-bar {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 13px;
+        background: var(--accent-dim);
+        border: 1px solid #00e5a028;
+        border-radius: var(--radius);
+      }
+      .info-bar span {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-action {
+        flex: 1;
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 11px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition: all 0.2s;
+      }
+      .btn-action:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .btn-action:active {
+        transform: scale(0.97);
+      }
+      .btn-action:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+      .btn-action:disabled:hover {
+        border-color: var(--border);
+        color: var(--text);
+        background: var(--surface);
+      }
+      .btn-action svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+
+      .error-msg {
+        background: #1a0f0f;
+        border: 1px solid #3a1a1a;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--danger);
+        display: none;
+        line-height: 1.6;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: var(--accent);
+        color: #000;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 9px 18px;
+        border-radius: 100px;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 999;
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast.error {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .crop-mode canvas {
+        cursor: crosshair !important;
+      }
+
+      /* ── URL Builder ── */
+      .builder-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .builder-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+      }
+      .builder-header:hover {
+        background: #222;
+      }
+
+      .builder-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .builder-badge {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 2px 7px;
+        letter-spacing: 0.06em;
+      }
+
+      .builder-chevron {
+        width: 14px;
+        height: 14px;
+        color: var(--text-dim);
+        transition: transform 0.22s ease;
+        flex-shrink: 0;
+      }
+      .builder-section.open .builder-chevron {
+        transform: rotate(180deg);
+      }
+
+      .builder-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+      }
+      .builder-section.open .builder-body {
+        max-height: 320px;
+      }
+
+      .builder-inner {
+        padding: 0 14px 14px;
+        border-top: 1px solid var(--border);
+      }
+
+      .builder-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+        margin-bottom: 10px;
+      }
+
+      .builder-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .builder-field.span3 { grid-column: span 3; }
+      .builder-field.span2 { grid-column: span 2; }
+
+      .builder-field label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .builder-input,
+      .builder-select {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .builder-input:focus,
+      .builder-select:focus {
+        border-color: var(--accent);
+      }
+      .builder-input::placeholder {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+      .builder-select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 28px;
+      }
+
+      .builder-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 2px;
+      }
+
+      .btn-parse {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-parse:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* ── Export Crop ── */
+      .btn-export-crop {
+        background: none;
+        border: 1px solid var(--accent);
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-export-crop:hover {
+        background: var(--accent-dim);
+      }
+      .btn-export-crop:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        border-color: var(--border);
+        color: var(--text-dim);
+      }
+      .btn-export-crop:disabled:hover {
+        background: none;
+      }
+
+      .share-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        display: none;
+      }
+
+      .share-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .share-url-input {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        outline: none;
+        cursor: text;
+        min-width: 0;
+      }
+      .share-url-input:focus {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="logo">◈ Sheet Viewer</span>
+      <div class="status-pill">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Sedia</span>
+      </div>
+    </header>
+
+    <div class="main">
+      <div class="url-section">
+        <span class="sec-label">URL Export Google Sheets (PDF)</span>
+        <div class="url-row">
+          <input
+            type="text"
+            class="url-input"
+            id="urlInput"
+            placeholder="https://docs.google.com/spreadsheets/d/.../export?format=pdf&..."
+          />
+          <button class="btn-load" id="btnLoad" onclick="loadSheet()">MUAT</button>
+        </div>
+      </div>
+
+      <div class="builder-section" id="builderSection">
+        <div class="builder-header" onclick="toggleBuilder()">
+          <div class="builder-header-left">
+            <span class="sec-label" style="margin:0">Parameter URL</span>
+            <span class="builder-badge">URL BUILDER</span>
+          </div>
+          <svg class="builder-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <div class="builder-body" id="builderBody">
+          <div class="builder-inner">
+            <div class="builder-grid">
+              <div class="builder-field span3">
+                <label>URL / ID Spreadsheet</label>
+                <input type="text" class="builder-input" id="builderBase"
+                  placeholder="https://docs.google.com/spreadsheets/d/… atau ID sahaja"
+                  oninput="buildExportUrl()" />
+              </div>
+              <div class="builder-field">
+                <label>Format</label>
+                <select class="builder-select" id="builderFormat" onchange="buildExportUrl()">
+                  <option value="pdf" selected>PDF</option>
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">XLSX</option>
+                  <option value="ods">ODS</option>
+                  <option value="tsv">TSV</option>
+                </select>
+              </div>
+              <div class="builder-field">
+                <label>Sheet ID (gid)</label>
+                <input type="text" class="builder-input" id="builderGid"
+                  placeholder="0"
+                  oninput="buildExportUrl()" />
+              </div>
+              <div class="builder-field span3">
+                <label>Range</label>
+                <input type="text" class="builder-input" id="builderRange"
+                  placeholder="A1:Z50"
+                  oninput="buildExportUrl()" />
+              </div>
+            </div>
+            <div class="builder-actions">
+              <button class="btn-parse" onclick="parseUrlToBuilder()">Parse dari URL</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="crop-section" id="cropSection">
+        <div class="crop-header" onclick="toggleCrop()">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg class="crop-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            <span class="sec-label" style="margin:0">Tetapan Crop</span>
+          </div>
+          <div class="crop-tabs" onclick="event.stopPropagation()">
+            <button class="tab-btn active" id="tabAuto" onclick="switchTab('auto')">Auto</button>
+            <button class="tab-btn" id="tabManual" onclick="switchTab('manual')">Manual</button>
+            <button class="tab-btn" id="tabNone" onclick="switchTab('none')">Tiada</button>
+          </div>
+        </div>
+
+        <div class="crop-body" id="cropBody">
+        <div class="crop-body-inner">
+
+        <div class="auto-crop-panel visible" id="autoCropPanel">
+          <div class="crop-grid">
+            <div class="crop-field">
+              <label>X — kiri (%)</label>
+              <input
+                type="number"
+                class="crop-input"
+                id="cropX"
+                placeholder="0"
+                min="0"
+                max="100"
+              />
+            </div>
+            <div class="crop-field">
+              <label>Y — atas (%)</label>
+              <input
+                type="number"
+                class="crop-input"
+                id="cropY"
+                placeholder="0"
+                min="0"
+                max="100"
+              />
+            </div>
+            <div class="crop-field">
+              <label>Lebar (%)</label>
+              <input
+                type="number"
+                class="crop-input"
+                id="cropW"
+                placeholder="100"
+                min="1"
+                max="100"
+              />
+            </div>
+            <div class="crop-field">
+              <label>Tinggi (%)</label>
+              <input
+                type="number"
+                class="crop-input"
+                id="cropH"
+                placeholder="100"
+                min="1"
+                max="100"
+              />
+            </div>
+          </div>
+          <p class="crop-hint">
+            Nilai dalam <strong>peratus (%)</strong> daripada saiz gambar penuh. Contoh: X=50, Y=0,
+            Lebar=50, Tinggi=100 → bahagian kanan.
+          </p>
+          <div class="crop-presets">
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 9px;
+                color: var(--text-dim);
+              "
+              >PRATETAP:</span
+            >
+            <button class="preset-btn" onclick="setPreset(0, 0, 100, 50)">½ Atas</button>
+            <button class="preset-btn" onclick="setPreset(0, 50, 100, 50)">½ Bawah</button>
+            <button class="preset-btn" onclick="setPreset(0, 0, 50, 100)">½ Kiri</button>
+            <button class="preset-btn" onclick="setPreset(50, 0, 50, 100)">½ Kanan</button>
+            <button class="preset-btn" onclick="setPreset(0, 0, 100, 100)">Penuh</button>
+          </div>
+        </div>
+
+        <div class="manual-crop-panel" id="manualCropPanel">
+          <p class="manual-hint">
+            Selepas gambar dimuatkan, <strong>klik dan seret</strong> pada gambar untuk pilih
+            kawasan. Kemudian tekan <strong>Guna Crop</strong>.
+          </p>
+          <div class="crop-coords">
+            <span class="coord-badge" id="coordDisplay">Tiada pilihan</span>
+            <button class="btn-reset-crop" onclick="resetManualCrop()">Buang</button>
+            <button class="btn-export-crop" id="btnExportCrop" onclick="exportToAutoCrop()" disabled>
+              Eksport ke Auto
+            </button>
+            <button class="btn-apply-crop" id="btnApplyCrop" onclick="applyManualCrop()" disabled>
+              Guna Crop
+            </button>
+          </div>
+        </div>
+
+        </div><!-- /crop-body-inner -->
+        </div><!-- /crop-body -->
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="info-bar" id="infoBar">
+        <span id="infoText">—</span>
+        <span id="infoSize">—</span>
+      </div>
+
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <div class="placeholder" id="placeholder">
+          <div class="placeholder-icon">⊞</div>
+          <p>
+            Masukkan URL export Google Sheets<br />kemudian tekan
+            <strong style="color: var(--accent)">MUAT</strong>
+          </p>
+        </div>
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+          <span class="loading-text" id="loadingText">Memuat PDF...</span>
+        </div>
+        <div class="img-preview-container" id="imgContainer">
+          <div class="canvas-crop-container" id="cropContainer">
+            <canvas id="pdfCanvas"></canvas>
+            <div id="selectionBox"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-action" id="btnCopy" onclick="copyImage()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+          </svg>
+          Salin Gambar
+        </button>
+        <button class="btn-action" id="btnSave" onclick="saveImage()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Simpan Gambar
+        </button>
+        <button class="btn-action" id="btnShare" onclick="shareImage()" disabled style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Kongsi Gambar
+        </button>
+      </div>
+
+      <div class="share-section" id="shareSection">
+        <span class="sec-label">URL Kongsi</span>
+        <div class="share-row">
+          <input type="text" class="share-url-input" id="shareUrlInput" readonly
+            placeholder="Muatkan imej dahulu..." />
+          <button class="btn-load" onclick="copyShareUrl()">SALIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+      let renderedCanvas = null;
+      let currentCanvas = null;
+      let cropMode = "auto";
+      let isDragging = false;
+      let dragStart = { x: 0, y: 0 },
+        dragCurrent = { x: 0, y: 0 };
+      let manualCropRect = null;
+      let dragController = null;
+
+      // Semak Web Share API dengan sokongan fail
+      const shareSupported = !!(navigator.share && navigator.canShare &&
+        navigator.canShare({ files: [new File([""], "t.png", { type: "image/png" })] }));
+      if (shareSupported) document.getElementById("btnShare").style.display = "";
+
+      // ── Helpers ──
+      function setStatus(state, text) {
+        document.getElementById("statusDot").className = "status-dot" + (state ? " " + state : "");
+        document.getElementById("statusText").textContent = text;
+      }
+
+      function showToast(msg, isError = false) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = "toast" + (isError ? " error" : "");
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2800);
+      }
+
+      function showError(msg) {
+        const el = document.getElementById("errorMsg");
+        el.style.display = "block";
+        el.textContent = "⚠ " + msg;
+      }
+
+      function hideError() {
+        document.getElementById("errorMsg").style.display = "none";
+      }
+
+      // ── Tabs ──
+      function switchTab(tab) {
+        cropMode = tab;
+        ["auto", "manual", "none"].forEach((t) => {
+          const btn = document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1));
+          btn.classList.toggle("active", t === tab);
+        });
+        document.getElementById("autoCropPanel").classList.toggle("visible", tab === "auto");
+        document.getElementById("manualCropPanel").classList.toggle("visible", tab === "manual");
+        document.getElementById("canvasWrapper").classList.toggle("crop-mode", tab === "manual");
+        if (renderedCanvas && tab !== "manual") applyCurrentCrop();
+        updateShareUrl();
+      }
+
+      // ── Presets ──
+      function setPreset(x, y, w, h) {
+        document.getElementById("cropX").value = x;
+        document.getElementById("cropY").value = y;
+        document.getElementById("cropW").value = w;
+        document.getElementById("cropH").value = h;
+        if (renderedCanvas) applyCurrentCrop();
+      }
+
+      // ── Load Sheet ──
+      async function loadSheet() {
+        const url = document.getElementById("urlInput").value.trim();
+        if (!url) {
+          showToast("Sila masukkan URL", true);
+          return;
+        }
+
+        hideError();
+        document.getElementById("placeholder").style.display = "none";
+        document.getElementById("imgContainer").style.display = "none";
+        document.getElementById("infoBar").style.display = "none";
+        document.getElementById("btnCopy").disabled = true;
+        document.getElementById("btnSave").disabled = true;
+        document.getElementById("btnLoad").disabled = true;
+
+        const overlay = document.getElementById("loadingOverlay");
+        overlay.style.display = "flex";
+        setStatus("", "Memuat...");
+
+        const proxyUrl = "https://gsheetproxy.uncle.workers.dev?url=" + encodeURIComponent(url);
+
+        try {
+          document.getElementById("loadingText").textContent = "Memuat PDF...";
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error("Gagal memuat URL. Pastikan sheet sudah public.");
+
+          const arrayBuffer = await response.arrayBuffer();
+          document.getElementById("loadingText").textContent = "Merender halaman...";
+
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const page = await pdf.getPage(1);
+          const dpr = window.devicePixelRatio || 1;
+          const scale = dpr * 3;
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.getElementById("pdfCanvas");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          canvas.style.width = (viewport.width / scale) * 2.5 + "px";
+          canvas.style.height = "auto";
+
+          await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+
+          renderedCanvas = canvas;
+          applyCurrentCrop();
+
+          overlay.style.display = "none";
+          document.getElementById("imgContainer").style.display = "block";
+          document.getElementById("infoBar").style.display = "flex";
+          document.getElementById("infoText").textContent = `${pdf.numPages} halaman · Halaman 1`;
+          document.getElementById("infoSize").textContent = `${canvas.width} × ${canvas.height}px`;
+          document.getElementById("btnCopy").disabled = false;
+          document.getElementById("btnSave").disabled = false;
+          if (shareSupported) document.getElementById("btnShare").disabled = false;
+          setStatus("active", "Berjaya dimuatkan");
+          showToast("✓ Gambar berjaya dimuatkan");
+          setupDrag();
+          updateShareUrl();
+        } catch (err) {
+          overlay.style.display = "none";
+          document.getElementById("placeholder").style.display = "flex";
+          showError(err.message || "Ralat tidak diketahui.");
+          setStatus("error", "Ralat");
+          showToast("Gagal memuat", true);
+        }
+
+        document.getElementById("btnLoad").disabled = false;
+      }
+
+      // ── Crop Logic ──
+      function applyCurrentCrop() {
+        if (!renderedCanvas) return;
+
+        if (cropMode === "none") {
+          currentCanvas = renderedCanvas;
+          document.getElementById("infoSize").textContent =
+            `${renderedCanvas.width} × ${renderedCanvas.height}px`;
+          return;
+        }
+
+        if (cropMode === "auto") {
+          const W = renderedCanvas.width;
+          const H = renderedCanvas.height;
+          const xPct = parseFloat(document.getElementById("cropX").value) || 0;
+          const yPct = parseFloat(document.getElementById("cropY").value) || 0;
+          const wPct = parseFloat(document.getElementById("cropW").value) || 100;
+          const hPct = parseFloat(document.getElementById("cropH").value) || 100;
+
+          const x = Math.round((W * xPct) / 100);
+          const y = Math.round((H * yPct) / 100);
+          const w = Math.round((W * wPct) / 100);
+          const h = Math.round((H * hPct) / 100);
+
+          currentCanvas = cropCanvas(renderedCanvas, x, y, w, h);
+          document.getElementById("infoSize").textContent = `${w} × ${h}px (crop)`;
+        }
+      }
+
+      function applyManualCrop() {
+        if (!manualCropRect || !renderedCanvas) return;
+        const { x, y, w, h } = manualCropRect;
+        currentCanvas = cropCanvas(renderedCanvas, x, y, w, h);
+        document.getElementById("infoSize").textContent = `${w} × ${h}px (crop manual)`;
+        document.getElementById("btnCopy").disabled = false;
+        document.getElementById("btnSave").disabled = false;
+        if (shareSupported) document.getElementById("btnShare").disabled = false;
+        showToast("✓ Manual crop digunakan");
+      }
+
+      function cropCanvas(src, x, y, w, h) {
+        x = Math.max(0, Math.min(x, src.width));
+        y = Math.max(0, Math.min(y, src.height));
+        w = Math.max(1, Math.min(w, src.width - x));
+        h = Math.max(1, Math.min(h, src.height - y));
+        const out = document.createElement("canvas");
+        out.width = w;
+        out.height = h;
+        out.getContext("2d").drawImage(src, x, y, w, h, 0, 0, w, h);
+        return out;
+      }
+
+      function resetManualCrop() {
+        manualCropRect = null;
+        document.getElementById("selectionBox").style.display = "none";
+        document.getElementById("coordDisplay").textContent = "Tiada pilihan";
+        document.getElementById("btnApplyCrop").disabled = true;
+        document.getElementById("btnExportCrop").disabled = true;
+        currentCanvas = renderedCanvas;
+        updateShareUrl();
+        showToast("Crop dibuang");
+      }
+
+      // ── Drag Selection ──
+      function setupDrag() {
+        if (dragController) dragController.abort();
+        dragController = new AbortController();
+        const { signal } = dragController;
+        const c = document.getElementById("pdfCanvas");
+        c.addEventListener("mousedown", onDragStart, { signal });
+        document.addEventListener("mousemove", onDragMove, { signal });
+        document.addEventListener("mouseup", onDragEnd, { signal });
+        c.addEventListener("touchstart", onTouchStart, { passive: false, signal });
+        document.addEventListener("touchmove", onTouchMove, { passive: false, signal });
+        document.addEventListener("touchend", onTouchEnd, { signal });
+      }
+
+      function getPos(canvas, clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ((clientX - rect.left) * canvas.width) / rect.width,
+          y: ((clientY - rect.top) * canvas.height) / rect.height,
+          cx: clientX - rect.left,
+          cy: clientY - rect.top,
+        };
+      }
+
+      function onDragStart(e) {
+        if (cropMode !== "manual") return;
+        isDragging = true;
+        dragStart = dragCurrent = getPos(e.target, e.clientX, e.clientY);
+        updateSelBox();
+      }
+
+      function onDragMove(e) {
+        if (!isDragging || cropMode !== "manual") return;
+        const canvas = document.getElementById("pdfCanvas");
+        dragCurrent = getPos(canvas, e.clientX, e.clientY);
+        updateSelBox();
+      }
+
+      function onDragEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        const canvas = document.getElementById("pdfCanvas");
+        dragCurrent = getPos(canvas, e.clientX, e.clientY);
+        finalizeSelection();
+      }
+
+      function onTouchStart(e) {
+        if (cropMode !== "manual") return;
+        e.preventDefault();
+        const t = e.touches[0];
+        isDragging = true;
+        dragStart = dragCurrent = getPos(
+          document.getElementById("pdfCanvas"),
+          t.clientX,
+          t.clientY,
+        );
+        updateSelBox();
+      }
+
+      function onTouchMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        dragCurrent = getPos(document.getElementById("pdfCanvas"), t.clientX, t.clientY);
+        updateSelBox();
+      }
+
+      function onTouchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        finalizeSelection();
+      }
+
+      function updateSelBox() {
+        const canvas = document.getElementById("pdfCanvas");
+        const rect = canvas.getBoundingClientRect();
+        const sx = canvas.width / rect.width;
+        const sy = canvas.height / rect.height;
+
+        const x1 = Math.min(dragStart.x, dragCurrent.x);
+        const y1 = Math.min(dragStart.y, dragCurrent.y);
+        const x2 = Math.max(dragStart.x, dragCurrent.x);
+        const y2 = Math.max(dragStart.y, dragCurrent.y);
+
+        const box = document.getElementById("selectionBox");
+        box.style.display = "block";
+        box.style.left = x1 / sx + "px";
+        box.style.top = y1 / sy + "px";
+        box.style.width = (x2 - x1) / sx + "px";
+        box.style.height = (y2 - y1) / sy + "px";
+      }
+
+      function finalizeSelection() {
+        const x1 = Math.round(Math.min(dragStart.x, dragCurrent.x));
+        const y1 = Math.round(Math.min(dragStart.y, dragCurrent.y));
+        const w = Math.round(Math.abs(dragCurrent.x - dragStart.x));
+        const h = Math.round(Math.abs(dragCurrent.y - dragStart.y));
+        if (w < 10 || h < 10) return;
+
+        manualCropRect = { x: x1, y: y1, w, h };
+        document.getElementById("coordDisplay").textContent = `X:${x1} Y:${y1} · ${w}×${h}px`;
+        document.getElementById("btnApplyCrop").disabled = false;
+        document.getElementById("btnExportCrop").disabled = false;
+        updateShareUrl();
+      }
+
+      // ── Export Manual Crop → Auto Settings ──
+      function exportToAutoCrop() {
+        if (!manualCropRect || !renderedCanvas) return;
+        const [x, y, w, h] = getCropPercent();
+        document.getElementById("cropX").value = x;
+        document.getElementById("cropY").value = y;
+        document.getElementById("cropW").value = w;
+        document.getElementById("cropH").value = h;
+        switchTab("auto");
+        showToast("✓ Nilai crop dieksport ke tetapan Auto");
+      }
+
+      // ── Share URL ──
+      function round2(val) {
+        return Math.round(val * 100) / 100;
+      }
+
+      function getCropPercent() {
+        if (cropMode === "auto") {
+          return [
+            parseFloat(document.getElementById("cropX").value) || 0,
+            parseFloat(document.getElementById("cropY").value) || 0,
+            parseFloat(document.getElementById("cropW").value) || 100,
+            parseFloat(document.getElementById("cropH").value) || 100,
+          ];
+        }
+        if (cropMode === "manual" && manualCropRect && renderedCanvas) {
+          const { x, y, w, h } = manualCropRect;
+          const W = renderedCanvas.width;
+          const H = renderedCanvas.height;
+          return [
+            round2((x / W) * 100),
+            round2((y / H) * 100),
+            round2((w / W) * 100),
+            round2((h / H) * 100),
+          ];
+        }
+        return [0, 0, 100, 100];
+      }
+
+      function updateShareUrl() {
+        const url = document.getElementById("urlInput").value.trim();
+        if (!url || !renderedCanvas) return;
+        const base = window.location.origin + window.location.pathname;
+        const [x, y, w, h] = getCropPercent();
+        const cropStr = cropMode === "none" ? "" : `&crop=${x},${y},${w},${h}`;
+        document.getElementById("shareUrlInput").value =
+          `${base}?url=${encodeURIComponent(url)}${cropStr}`;
+        document.getElementById("shareSection").style.display = "block";
+      }
+
+      // ── Crop Toggle ──
+      function toggleCrop() {
+        document.getElementById("cropSection").classList.toggle("open");
+      }
+
+      // ── URL Builder ──
+      function toggleBuilder() {
+        document.getElementById("builderSection").classList.toggle("open");
+      }
+
+      function extractSpreadsheetId(input) {
+        const match = input.match(/\/spreadsheets\/d\/([^\/\?#]+)/);
+        return match ? match[1] : input.trim();
+      }
+
+      function extractGidFromUrl(input) {
+        try {
+          const parsed = new URL(input);
+          const qGid = parsed.searchParams.get("gid");
+          if (qGid) return qGid;
+          const hGid = parsed.hash.match(/gid=(\d+)/);
+          if (hGid) return hGid[1];
+        } catch {}
+        return null;
+      }
+
+      function buildExportUrl() {
+        const base = document.getElementById("builderBase").value.trim();
+        if (!base) return;
+        const id = extractSpreadsheetId(base);
+        if (!id) return;
+
+        // Auto-isi gid dari URL yang ditampal ke builderBase
+        const gidField = document.getElementById("builderGid");
+        const autoGid = extractGidFromUrl(base);
+        if (autoGid) gidField.value = autoGid;
+
+        const format = document.getElementById("builderFormat").value;
+        const gid = gidField.value.trim();
+        const range = document.getElementById("builderRange").value.trim();
+
+        let url = `https://docs.google.com/spreadsheets/d/${id}/export?format=${format}`;
+        if (gid) url += `&gid=${gid}`;
+        if (range) url += `&range=${encodeURIComponent(range)}`;
+
+        document.getElementById("urlInput").value = url;
+        updateShareUrl();
+      }
+
+      function parseUrlToBuilder() {
+        const raw = document.getElementById("urlInput").value.trim();
+        if (!raw) { showToast("Tiada URL untuk dihuraikan", true); return; }
+        try {
+          const parsed = new URL(raw);
+          const idMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^\/]+)/);
+          if (idMatch) document.getElementById("builderBase").value = idMatch[1];
+          document.getElementById("builderFormat").value =
+            parsed.searchParams.get("format") || "pdf";
+          document.getElementById("builderGid").value =
+            parsed.searchParams.get("gid") || "";
+          document.getElementById("builderRange").value =
+            parsed.searchParams.get("range") || "";
+          if (!document.getElementById("builderSection").classList.contains("open")) {
+            toggleBuilder();
+          }
+          showToast("✓ URL dihuraikan ke parameter");
+        } catch {
+          showToast("URL tidak sah", true);
+        }
+      }
+
+      async function copyShareUrl() {
+        const val = document.getElementById("shareUrlInput").value;
+        if (!val) return;
+        try {
+          await navigator.clipboard.writeText(val);
+          showToast("✓ URL dikongsi disalin");
+        } catch {
+          document.getElementById("shareUrlInput").select();
+          showToast("Pilih dan salin URL secara manual", true);
+        }
+      }
+
+      // ── Copy / Save ──
+      async function copyImage() {
+        if (!currentCanvas) return;
+        try {
+          const blob = await new Promise((res) => currentCanvas.toBlob(res, "image/png"));
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          showToast("✓ Gambar disalin ke clipboard");
+        } catch (err) {
+          const w = window.open();
+          w.document.write(
+            `<img src="${currentCanvas.toDataURL()}" style="max-width:100%"><p style="font-family:monospace;color:#666;padding:10px">Tekan kanan → Salin Gambar</p>`,
+          );
+          showToast("Buka tab baru — klik kanan salin", true);
+        }
+      }
+
+      function saveImage() {
+        if (!currentCanvas) return;
+        const a = document.createElement("a");
+        a.download = "sheet-" + new Date().toISOString().slice(0, 10) + ".png";
+        a.href = currentCanvas.toDataURL("image/png");
+        a.click();
+        showToast("✓ Gambar disimpan");
+      }
+
+      async function shareImage() {
+        if (!currentCanvas) return;
+        const filename = "sheet-" + new Date().toISOString().slice(0, 10) + ".png";
+        try {
+          const blob = await new Promise((res) => currentCanvas.toBlob(res, "image/png"));
+          const file = new File([blob], filename, { type: "image/png" });
+          await navigator.share({ files: [file] });
+        } catch (err) {
+          if (err.name !== "AbortError") showToast("Gagal kongsi gambar", true);
+        }
+      }
+
+      // ── Init dari URL params ──
+      // ?url=...&crop=x,y,w,h
+      // Contoh: &crop=0,50,100,50 → separuh bawah
+      (function init() {
+        const p = new URLSearchParams(window.location.search);
+        const urlParam = p.get("url");
+        const cropParam = p.get("crop");
+
+        if (urlParam) {
+          document.getElementById("urlInput").value = urlParam;
+        }
+
+        if (cropParam) {
+          const parts = cropParam.split(",").map(Number);
+          if (parts.length === 4 && parts.every((n) => !isNaN(n))) {
+            document.getElementById("cropX").value = parts[0];
+            document.getElementById("cropY").value = parts[1];
+            document.getElementById("cropW").value = parts[2];
+            document.getElementById("cropH").value = parts[3];
+            switchTab("auto");
+          }
+        }
+
+        if (urlParam) loadSheet();
+      })();
+
+      document.getElementById("urlInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") loadSheet();
+      });
+
+      ["cropX", "cropY", "cropW", "cropH"].forEach((id) => {
+        document.getElementById(id).addEventListener("change", () => {
+          if (cropMode === "auto" && renderedCanvas) {
+            applyCurrentCrop();
+            updateShareUrl();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
