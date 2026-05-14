@@ -148,15 +148,23 @@
         color: #000;
         border: none;
         border-radius: var(--radius);
-        padding: 9px 18px;
+        padding: 9px 13px;
         font-family: "IBM Plex Mono", monospace;
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
         transition:
           opacity 0.2s,
           transform 0.1s;
+      }
+      .btn-load svg {
+        width: 16px;
+        height: 16px;
       }
       .btn-load:hover {
         opacity: 0.85;
@@ -167,6 +175,31 @@
       .btn-load:disabled {
         opacity: 0.4;
         cursor: not-allowed;
+      }
+
+      .btn-paste {
+        background: var(--surface);
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .btn-paste:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-paste:active {
+        transform: scale(0.95);
+      }
+      .btn-paste svg {
+        width: 14px;
+        height: 14px;
       }
 
       /* Crop */
@@ -200,7 +233,7 @@
         transition: max-height 0.25s ease;
       }
       .crop-section.open .crop-body {
-        max-height: 500px;
+        max-height: 380px;
       }
 
       .crop-body-inner {
@@ -678,7 +711,62 @@
         transition: max-height 0.25s ease;
       }
       .builder-section.open .builder-body {
+        max-height: 520px;
+      }
+
+      /* ── Advanced Sub-section ── */
+      .adv-section {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+
+      .adv-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        cursor: pointer;
+        user-select: none;
+        background: var(--bg);
+        transition: background 0.15s;
+      }
+      .adv-header:hover {
+        background: #1c1c1c;
+      }
+
+      .adv-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .adv-chevron {
+        width: 12px;
+        height: 12px;
+        color: var(--text-dim);
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
+      }
+      .adv-section.open .adv-chevron {
+        transform: rotate(180deg);
+      }
+
+      .adv-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+      }
+      .adv-section.open .adv-body {
         max-height: 320px;
+      }
+
+      .adv-body-inner {
+        padding: 10px;
+        border-top: 1px solid var(--border);
       }
 
       .builder-inner {
@@ -788,6 +876,52 @@
         background: none;
       }
 
+      /* ── Toggle Bar ── */
+      .toggle-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .btn-toggle {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.2s;
+      }
+      .btn-toggle:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-toggle.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+
+      .toggle-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+      .btn-toggle.active .toggle-dot {
+        background: var(--accent);
+        box-shadow: 0 0 4px var(--accent);
+      }
+
       .share-section {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -839,11 +973,32 @@
             id="urlInput"
             placeholder="https://docs.google.com/spreadsheets/d/.../export?format=pdf&..."
           />
-          <button class="btn-load" id="btnLoad" onclick="loadSheet()">MUAT</button>
+          <button class="btn-paste" onclick="pasteUrl()" title="Tampal dari clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="2" width="6" height="4" rx="1"/>
+              <path d="M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-2"/>
+              <rect x="7" y="10" width="10" height="2" rx="0.5"/>
+              <rect x="7" y="14" width="7" height="2" rx="0.5"/>
+            </svg>
+          </button>
+          <button class="btn-load" id="btnLoad" onclick="loadSheet()" title="Muat">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <polygon points="6,3 21,12 6,21"/>
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div class="builder-section" id="builderSection">
+      <div class="toggle-bar">
+        <button class="btn-toggle" id="btnToggleBuilder" onclick="toggleSection('builderSection','btnToggleBuilder')">
+          <span class="toggle-dot"></span>Parameter URL
+        </button>
+        <button class="btn-toggle" id="btnToggleCrop" onclick="toggleSection('cropSection','btnToggleCrop')">
+          <span class="toggle-dot"></span>Tetapan Crop
+        </button>
+      </div>
+
+      <div class="builder-section" id="builderSection" style="display:none">
         <div class="builder-header" onclick="toggleBuilder()">
           <div class="builder-header-left">
             <span class="sec-label" style="margin:0">Parameter URL</span>
@@ -885,6 +1040,81 @@
                   oninput="buildExportUrl()" />
               </div>
             </div>
+
+            <div class="adv-section" id="advUrl">
+              <div class="adv-header" onclick="toggleAdv('advUrl')">
+                <span class="adv-label">Lanjutan</span>
+                <svg class="adv-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              <div class="adv-body">
+                <div class="adv-body-inner">
+                  <div class="builder-grid" style="margin-top:0;margin-bottom:10px">
+                    <div class="builder-field">
+                      <label>Saiz Kertas</label>
+                      <select class="builder-select" id="builderSize" onchange="buildExportUrl()">
+                        <option value="">— Auto —</option>
+                        <option value="7" selected>A4</option>
+                        <option value="6">A3</option>
+                        <option value="8">A5</option>
+                        <option value="0">Letter</option>
+                        <option value="2">Legal</option>
+                        <option value="1">Tabloid</option>
+                        <option value="9">B4</option>
+                        <option value="10">B5</option>
+                      </select>
+                    </div>
+                    <div class="builder-field">
+                      <label>Orientasi</label>
+                      <select class="builder-select" id="builderPortrait" onchange="buildExportUrl()">
+                        <option value="">— Auto —</option>
+                        <option value="true" selected>Portrait</option>
+                        <option value="false">Landscape</option>
+                      </select>
+                    </div>
+                    <div class="builder-field">
+                      <label>Skala</label>
+                      <select class="builder-select" id="builderScale" onchange="buildExportUrl()">
+                        <option value="">— Auto —</option>
+                        <option value="1" selected>1 — Normal</option>
+                        <option value="2">2 — Fit Lebar</option>
+                        <option value="3">3 — Fit Tinggi</option>
+                        <option value="4">4 — Fit Halaman</option>
+                      </select>
+                    </div>
+                    <div class="builder-field">
+                      <label>Margin Atas (inci)</label>
+                      <input type="number" class="builder-input" id="builderMarginTop"
+                        placeholder="0.75" min="0" step="0.01" oninput="buildExportUrl()" />
+                    </div>
+                    <div class="builder-field">
+                      <label>Margin Bawah (inci)</label>
+                      <input type="number" class="builder-input" id="builderMarginBottom"
+                        placeholder="0.75" min="0" step="0.01" oninput="buildExportUrl()" />
+                    </div>
+                    <div class="builder-field">
+                      <label>Margin Kiri (inci)</label>
+                      <input type="number" class="builder-input" id="builderMarginLeft"
+                        placeholder="0.7" min="0" step="0.01" oninput="buildExportUrl()" />
+                    </div>
+                    <div class="builder-field">
+                      <label>Margin Kanan (inci)</label>
+                      <input type="number" class="builder-input" id="builderMarginRight"
+                        placeholder="0.7" min="0" step="0.01" oninput="buildExportUrl()" />
+                    </div>
+                  </div>
+                  <div class="crop-presets" style="margin-bottom:0">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim)">MARGIN:</span>
+                    <button class="preset-btn" onclick="setMarginPreset(0.75,0.75,0.7,0.7)">Normal</button>
+                    <button class="preset-btn" onclick="setMarginPreset(0.25,0.25,0.25,0.25)">Sempit</button>
+                    <button class="preset-btn" onclick="setMarginPreset(1,1,1,1)">Luas</button>
+                    <button class="preset-btn" onclick="setMarginPreset(0,0,0,0)">Tiada</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="builder-actions">
               <button class="btn-parse" onclick="parseUrlToBuilder()">Parse dari URL</button>
             </div>
@@ -892,7 +1122,7 @@
         </div>
       </div>
 
-      <div class="crop-section" id="cropSection">
+      <div class="crop-section" id="cropSection" style="display:none">
         <div class="crop-header" onclick="toggleCrop()">
           <div style="display:flex;align-items:center;gap:8px">
             <svg class="crop-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -911,70 +1141,47 @@
         <div class="crop-body-inner">
 
         <div class="auto-crop-panel visible" id="autoCropPanel">
-          <div class="crop-grid">
-            <div class="crop-field">
-              <label>X — kiri (%)</label>
-              <input
-                type="number"
-                class="crop-input"
-                id="cropX"
-                placeholder="0"
-                min="0"
-                max="100"
-              />
-            </div>
-            <div class="crop-field">
-              <label>Y — atas (%)</label>
-              <input
-                type="number"
-                class="crop-input"
-                id="cropY"
-                placeholder="0"
-                min="0"
-                max="100"
-              />
-            </div>
-            <div class="crop-field">
-              <label>Lebar (%)</label>
-              <input
-                type="number"
-                class="crop-input"
-                id="cropW"
-                placeholder="100"
-                min="1"
-                max="100"
-              />
-            </div>
-            <div class="crop-field">
-              <label>Tinggi (%)</label>
-              <input
-                type="number"
-                class="crop-input"
-                id="cropH"
-                placeholder="100"
-                min="1"
-                max="100"
-              />
-            </div>
-          </div>
-          <p class="crop-hint">
-            Nilai dalam <strong>peratus (%)</strong> daripada saiz gambar penuh. Contoh: X=50, Y=0,
-            Lebar=50, Tinggi=100 → bahagian kanan.
-          </p>
-          <div class="crop-presets">
-            <span
-              style="
-                font-family: &quot;IBM Plex Mono&quot;, monospace;
-                font-size: 9px;
-                color: var(--text-dim);
-              "
-              >PRATETAP:</span
-            >
+          <div class="crop-presets" style="padding-top:2px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim)">PRATETAP:</span>
             <button class="preset-btn" onclick="setPreset(0, 0, 100, 50)">½ Atas</button>
             <button class="preset-btn" onclick="setPreset(0, 50, 100, 50)">½ Bawah</button>
             <button class="preset-btn" onclick="setPreset(0, 0, 50, 100)">½ Kiri</button>
             <button class="preset-btn" onclick="setPreset(50, 0, 50, 100)">½ Kanan</button>
             <button class="preset-btn" onclick="setPreset(0, 0, 100, 100)">Penuh</button>
+          </div>
+          <div class="adv-section" id="advCrop">
+            <div class="adv-header" onclick="toggleAdv('advCrop')">
+              <span class="adv-label">Lanjutan</span>
+              <svg class="adv-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+            <div class="adv-body">
+              <div class="adv-body-inner">
+                <div class="crop-grid" style="margin-bottom:10px">
+                  <div class="crop-field">
+                    <label>X — kiri (%)</label>
+                    <input type="number" class="crop-input" id="cropX" placeholder="0" min="0" max="100" />
+                  </div>
+                  <div class="crop-field">
+                    <label>Y — atas (%)</label>
+                    <input type="number" class="crop-input" id="cropY" placeholder="0" min="0" max="100" />
+                  </div>
+                  <div class="crop-field">
+                    <label>Lebar (%)</label>
+                    <input type="number" class="crop-input" id="cropW" placeholder="100" min="1" max="100" />
+                  </div>
+                  <div class="crop-field">
+                    <label>Tinggi (%)</label>
+                    <input type="number" class="crop-input" id="cropH" placeholder="100" min="1" max="100" />
+                  </div>
+                </div>
+                <p class="crop-hint">
+                  Nilai dalam <strong>peratus (%)</strong> daripada saiz gambar penuh. Contoh: X=50, Y=0,
+                  Lebar=50, Tinggi=100 → bahagian kanan.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1116,17 +1323,81 @@
         document.getElementById("autoCropPanel").classList.toggle("visible", tab === "auto");
         document.getElementById("manualCropPanel").classList.toggle("visible", tab === "manual");
         document.getElementById("canvasWrapper").classList.toggle("crop-mode", tab === "manual");
+        document.getElementById("selectionBox").style.display = "none";
         if (renderedCanvas && tab !== "manual") applyCurrentCrop();
+        if (tab === "auto") updateCropOverlay();
+        else if (tab === "manual" && manualCropRect) showManualOverlay();
         updateShareUrl();
       }
 
-      // ── Presets ──
+      // ── Paste URL ──
+      async function pasteUrl() {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (!text.trim()) { showToast("Clipboard kosong", true); return; }
+          document.getElementById("urlInput").value = text.trim();
+          showToast("✓ URL ditampal");
+        } catch {
+          showToast("Tidak dapat akses clipboard", true);
+        }
+      }
+
+      // ── Crop Overlay ──
+      function updateCropOverlay() {
+        const box = document.getElementById("selectionBox");
+        if (!renderedCanvas || cropMode !== "auto") {
+          if (cropMode !== "manual") box.style.display = "none";
+          return;
+        }
+        const xPct = parseFloat(document.getElementById("cropX").value) || 0;
+        const yPct = parseFloat(document.getElementById("cropY").value) || 0;
+        const wPct = parseFloat(document.getElementById("cropW").value) || 100;
+        const hPct = parseFloat(document.getElementById("cropH").value) || 100;
+        if (xPct === 0 && yPct === 0 && wPct >= 100 && hPct >= 100) {
+          box.style.display = "none";
+          return;
+        }
+        const canvas = document.getElementById("pdfCanvas");
+        const dw = canvas.offsetWidth;
+        const dh = canvas.offsetHeight;
+        if (!dw || !dh) return;
+        box.style.display = "block";
+        box.style.left = (dw * xPct / 100) + "px";
+        box.style.top = (dh * yPct / 100) + "px";
+        box.style.width = (dw * wPct / 100) + "px";
+        box.style.height = (dh * hPct / 100) + "px";
+      }
+
+      function showManualOverlay() {
+        if (!manualCropRect) return;
+        const canvas = document.getElementById("pdfCanvas");
+        const sx = canvas.width / canvas.offsetWidth;
+        const sy = canvas.height / canvas.offsetHeight;
+        const box = document.getElementById("selectionBox");
+        box.style.display = "block";
+        box.style.left = (manualCropRect.x / sx) + "px";
+        box.style.top = (manualCropRect.y / sy) + "px";
+        box.style.width = (manualCropRect.w / sx) + "px";
+        box.style.height = (manualCropRect.h / sy) + "px";
+      }
+
+      // ── Margin Presets ──
+      function setMarginPreset(top, bottom, left, right) {
+        document.getElementById("builderMarginTop").value = top;
+        document.getElementById("builderMarginBottom").value = bottom;
+        document.getElementById("builderMarginLeft").value = left;
+        document.getElementById("builderMarginRight").value = right;
+        buildExportUrl();
+      }
+
+      // ── Crop Presets ──
       function setPreset(x, y, w, h) {
         document.getElementById("cropX").value = x;
         document.getElementById("cropY").value = y;
         document.getElementById("cropW").value = w;
         document.getElementById("cropH").value = h;
         if (renderedCanvas) applyCurrentCrop();
+        updateCropOverlay();
       }
 
       // ── Load Sheet ──
@@ -1137,6 +1408,7 @@
           return;
         }
 
+        parseUrlToBuilder(true);
         hideError();
         document.getElementById("placeholder").style.display = "none";
         document.getElementById("imgContainer").style.display = "none";
@@ -1187,6 +1459,7 @@
           showToast("✓ Gambar berjaya dimuatkan");
           setupDrag();
           updateShareUrl();
+          requestAnimationFrame(() => updateCropOverlay());
         } catch (err) {
           overlay.style.display = "none";
           document.getElementById("placeholder").style.display = "flex";
@@ -1428,6 +1701,20 @@
         document.getElementById("builderSection").classList.toggle("open");
       }
 
+      // ── Advanced Sub-sections ──
+      function toggleAdv(id) {
+        document.getElementById(id).classList.toggle("open");
+      }
+
+      // ── Section Show/Hide ──
+      function toggleSection(sectionId, btnId) {
+        const section = document.getElementById(sectionId);
+        const btn = document.getElementById(btnId);
+        const hide = section.style.display !== "none";
+        section.style.display = hide ? "none" : "";
+        btn.classList.toggle("active", !hide);
+      }
+
       function extractSpreadsheetId(input) {
         const match = input.match(/\/spreadsheets\/d\/([^\/\?#]+)/);
         return match ? match[1] : input.trim();
@@ -1458,18 +1745,33 @@
         const format = document.getElementById("builderFormat").value;
         const gid = gidField.value.trim();
         const range = document.getElementById("builderRange").value.trim();
+        const size = document.getElementById("builderSize").value;
+        const portrait = document.getElementById("builderPortrait").value;
+        const scale = document.getElementById("builderScale").value;
 
         let url = `https://docs.google.com/spreadsheets/d/${id}/export?format=${format}`;
         if (gid) url += `&gid=${gid}`;
         if (range) url += `&range=${encodeURIComponent(range)}`;
+        if (size) url += `&size=${size}`;
+        if (portrait) url += `&portrait=${portrait}`;
+        if (scale) url += `&scale=${scale}`;
+
+        const marginTop = document.getElementById("builderMarginTop").value.trim();
+        const marginBottom = document.getElementById("builderMarginBottom").value.trim();
+        const marginLeft = document.getElementById("builderMarginLeft").value.trim();
+        const marginRight = document.getElementById("builderMarginRight").value.trim();
+        if (marginTop) url += `&top_margin=${marginTop}`;
+        if (marginBottom) url += `&bottom_margin=${marginBottom}`;
+        if (marginLeft) url += `&left_margin=${marginLeft}`;
+        if (marginRight) url += `&right_margin=${marginRight}`;
 
         document.getElementById("urlInput").value = url;
         updateShareUrl();
       }
 
-      function parseUrlToBuilder() {
+      function parseUrlToBuilder(silent = false) {
         const raw = document.getElementById("urlInput").value.trim();
-        if (!raw) { showToast("Tiada URL untuk dihuraikan", true); return; }
+        if (!raw) { if (!silent) showToast("Tiada URL untuk dihuraikan", true); return; }
         try {
           const parsed = new URL(raw);
           const idMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^\/]+)/);
@@ -1480,12 +1782,24 @@
             parsed.searchParams.get("gid") || "";
           document.getElementById("builderRange").value =
             parsed.searchParams.get("range") || "";
-          if (!document.getElementById("builderSection").classList.contains("open")) {
-            toggleBuilder();
+          const sizeParam = parsed.searchParams.get("size");
+          if (sizeParam !== null) document.getElementById("builderSize").value = sizeParam;
+          const portraitParam = parsed.searchParams.get("portrait");
+          if (portraitParam !== null) document.getElementById("builderPortrait").value = portraitParam;
+          const scaleParam = parsed.searchParams.get("scale");
+          if (scaleParam !== null) document.getElementById("builderScale").value = scaleParam;
+          document.getElementById("builderMarginTop").value = parsed.searchParams.get("top_margin") || "";
+          document.getElementById("builderMarginBottom").value = parsed.searchParams.get("bottom_margin") || "";
+          document.getElementById("builderMarginLeft").value = parsed.searchParams.get("left_margin") || "";
+          document.getElementById("builderMarginRight").value = parsed.searchParams.get("right_margin") || "";
+          if (!silent) {
+            if (!document.getElementById("builderSection").classList.contains("open")) {
+              toggleBuilder();
+            }
+            showToast("✓ URL dihuraikan ke parameter");
           }
-          showToast("✓ URL dihuraikan ke parameter");
         } catch {
-          showToast("URL tidak sah", true);
+          if (!silent) showToast("URL tidak sah", true);
         }
       }
 
@@ -1603,9 +1917,15 @@
         document.getElementById(id).addEventListener("change", () => {
           if (cropMode === "auto" && renderedCanvas) {
             applyCurrentCrop();
+            updateCropOverlay();
             updateShareUrl();
           }
         });
+      });
+
+      window.addEventListener("resize", () => {
+        if (cropMode === "auto") updateCropOverlay();
+        else if (cropMode === "manual" && manualCropRect) showManualOverlay();
       });
     </script>
   </body>
