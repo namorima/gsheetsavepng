@@ -1,0 +1,3577 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi URL Sheet</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap");
+
+      :root {
+        --bg: #0f0f0f;
+        --surface: #1a1a1a;
+        --border: #2a2a2a;
+        --accent: #00e5a0;
+        --accent-dim: #00e5a018;
+        --text: #e8e8e8;
+        --text-dim: #555;
+        --danger: #ff4d4d;
+        --radius: 6px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 28px 16px 60px;
+      }
+
+      header {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .logo {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .logo:hover {
+        opacity: 0.75;
+      }
+
+      .status-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 4px 12px;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        transition: all 0.3s;
+        flex-shrink: 0;
+      }
+      .status-dot.active {
+        background: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+      }
+      .status-dot.error {
+        background: var(--danger);
+      }
+
+      .status-text {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+      }
+
+      .main {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .sec-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      /* ── Sheet Input Section ── */
+      .sheet-input-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .url-input {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 13px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+        min-width: 0;
+      }
+      .url-input:focus {
+        border-color: var(--accent);
+      }
+      .url-input::placeholder {
+        color: var(--text-dim);
+      }
+
+      .btn-icon {
+        background: var(--surface);
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .btn-icon:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-icon:active {
+        transform: scale(0.95);
+      }
+      .btn-icon svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* GID list */
+      .gid-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .gid-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .gid-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .gid-name-input {
+        flex: 1 0 calc(100% - 50px);
+        margin-left: 50px;
+        margin-top: 2px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 5px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Sans", sans-serif;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .gid-name-input:focus { border-color: var(--accent); }
+      .gid-name-input::placeholder { color: var(--text-dim); font-size: 10px; }
+      .gid-row.disabled .gid-name-input { opacity: 0.35; }
+
+      .gid-num {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        width: 20px;
+        flex-shrink: 0;
+        text-align: right;
+      }
+
+      .gid-input {
+        width: 80px;
+        flex-shrink: 0;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .gid-input:focus {
+        border-color: var(--accent);
+      }
+      .gid-input::placeholder {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .gid-label-input {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .gid-label-input:focus {
+        border-color: var(--accent);
+      }
+      .gid-label-input::placeholder {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .gid-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .gid-status-dot.loading {
+        animation: pulse 1s ease-in-out infinite;
+      }
+      .gid-status-dot.ready {
+        background: var(--accent);
+        box-shadow: 0 0 4px var(--accent);
+      }
+      .gid-status-dot.error {
+        background: var(--danger);
+      }
+
+      /* Checkbox tick */
+      .gid-check {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        cursor: pointer;
+        position: relative;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .gid-check:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .gid-check:checked::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 1px;
+        width: 4px;
+        height: 8px;
+        border: 1.5px solid #000;
+        border-top: none;
+        border-left: none;
+        transform: rotate(45deg);
+      }
+      .gid-row.disabled .gid-input,
+      .gid-row.disabled .gid-label-input {
+        opacity: 0.35;
+      }
+
+      /* GID list collapse */
+      .gid-list-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .gid-count {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        border: 1px solid var(--accent);
+        border-radius: 100px;
+        padding: 1px 7px;
+        letter-spacing: 0.04em;
+      }
+      .gid-list-header-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .btn-gid-toggle {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-dim);
+        transition: color 0.15s, border-color 0.15s;
+      }
+      .btn-gid-toggle:hover {
+        color: var(--text);
+        border-color: #444;
+      }
+      .btn-gid-toggle svg {
+        width: 14px;
+        height: 14px;
+        transition: transform 0.2s;
+      }
+      .btn-gid-toggle.open svg {
+        transform: rotate(180deg);
+      }
+      .gid-list-wrap {
+        display: none;
+        margin-top: 6px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.25;
+        }
+      }
+
+      .btn-gid {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-dim);
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .btn-gid:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-gid.remove:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .btn-gid svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      .sheet-input-footer {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      /* ── Buttons ── */
+      .btn-primary {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        border-radius: var(--radius);
+        padding: 9px 18px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+        white-space: nowrap;
+      }
+      .btn-primary:hover {
+        opacity: 0.85;
+      }
+      .btn-primary:active {
+        transform: scale(0.97);
+      }
+      .btn-primary:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-primary svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ── Toggle Bar ── */
+      .toggle-bar {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .btn-toggle {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.2s;
+      }
+      .btn-toggle:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-toggle.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .toggle-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+      .btn-toggle.active .toggle-dot {
+        background: var(--accent);
+        box-shadow: 0 0 4px var(--accent);
+      }
+      .toggle-sheet-label {
+        opacity: 0.55;
+      }
+
+      /* ── Params Section ── */
+      .params-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+      }
+
+      .params-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .param-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .param-field.span2 {
+        grid-column: span 2;
+      }
+
+      .param-field label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .param-input,
+      .param-select {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .param-input:focus,
+      .param-select:focus {
+        border-color: var(--accent);
+      }
+      .param-input::placeholder {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+      .param-select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 28px;
+      }
+
+      /* ── Advanced Sub-section ── */
+      .adv-section {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .adv-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        cursor: pointer;
+        user-select: none;
+        background: var(--bg);
+        transition: background 0.15s;
+      }
+      .adv-header:hover {
+        background: #1c1c1c;
+      }
+      .adv-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .adv-chevron {
+        width: 12px;
+        height: 12px;
+        color: var(--text-dim);
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
+      }
+      .adv-section.open .adv-chevron {
+        transform: rotate(180deg);
+      }
+      .adv-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+      }
+      .adv-section.open .adv-body {
+        max-height: 320px;
+      }
+      .adv-body-inner {
+        padding: 10px;
+        border-top: 1px solid var(--border);
+      }
+
+      /* ── Crop Section ── */
+      .crop-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+      }
+
+      .crop-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .tab-btn {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 5px 12px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .tab-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #000;
+        font-weight: 600;
+      }
+
+      .auto-crop-panel {
+        display: none;
+      }
+      .auto-crop-panel.visible {
+        display: block;
+      }
+      .manual-crop-panel {
+        display: none;
+      }
+      .manual-crop-panel.visible {
+        display: block;
+      }
+
+      .crop-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .crop-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .crop-field label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .crop-input {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 7px 10px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        outline: none;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .crop-input:focus {
+        border-color: var(--accent);
+      }
+      .crop-input::placeholder {
+        color: var(--text-dim);
+        font-size: 10px;
+      }
+
+      .crop-hint {
+        font-size: 11px;
+        color: var(--text-dim);
+        line-height: 1.5;
+      }
+
+      .crop-presets {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+        align-items: center;
+      }
+
+      .preset-btn {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 4px 10px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .preset-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .manual-hint {
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+      .manual-hint strong {
+        color: var(--accent);
+      }
+
+      .crop-coords {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .coord-badge {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        border: 1px solid #00e5a030;
+        border-radius: 4px;
+        padding: 4px 10px;
+      }
+
+      .btn-apply-crop {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        margin-left: auto;
+      }
+      .btn-apply-crop:hover {
+        opacity: 0.85;
+      }
+      .btn-apply-crop:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .btn-reset-crop {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-reset-crop:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .btn-export-crop {
+        background: none;
+        border: 1px solid var(--accent);
+        border-radius: 4px;
+        padding: 6px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-export-crop:hover {
+        background: var(--accent-dim);
+      }
+      .btn-export-crop:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        border-color: var(--border);
+        color: var(--text-dim);
+      }
+      .btn-export-crop:disabled:hover {
+        background: none;
+      }
+
+      /* ── Navigation ── */
+      .nav-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 0;
+      }
+
+      .btn-nav {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-dim);
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .btn-nav:hover:not(:disabled) {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-nav:disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+      }
+      .btn-nav svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .nav-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .nav-label strong {
+        color: var(--text);
+      }
+
+      /* ── Canvas ── */
+      .canvas-wrapper {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        position: relative;
+        min-height: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .canvas-wrapper canvas {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 60px 20px;
+        color: var(--text-dim);
+      }
+      .placeholder-icon {
+        width: 44px;
+        height: 44px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+      .placeholder p {
+        font-size: 12px;
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--surface);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      .canvas-crop-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+      }
+
+      #selectionBox {
+        position: absolute;
+        border: 2px solid var(--accent);
+        background: rgba(0, 229, 160, 0.08);
+        pointer-events: none;
+        display: none;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+      }
+
+      .img-preview-container {
+        width: 100%;
+        display: none;
+      }
+
+      /* Dots */
+      .dots-row {
+        display: flex;
+        justify-content: center;
+        gap: 7px;
+        padding: 10px 0 6px;
+        width: 100%;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border);
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .dot.active {
+        background: var(--accent);
+        box-shadow: 0 0 4px var(--accent);
+        transform: scale(1.3);
+      }
+      .dot.error {
+        background: var(--danger);
+      }
+      .dot.loading {
+        background: var(--text-dim);
+        animation: pulse 1s ease-in-out infinite;
+      }
+
+      .crop-mode canvas {
+        cursor: crosshair !important;
+      }
+
+      /* ── Info Bar ── */
+      .info-bar {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 13px;
+        background: var(--accent-dim);
+        border: 1px solid #00e5a028;
+        border-radius: var(--radius);
+      }
+      .info-bar span {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+      }
+
+      /* ── Actions ── */
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-action {
+        flex: 1;
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 11px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition: all 0.2s;
+      }
+      .btn-action:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .btn-action:active {
+        transform: scale(0.97);
+      }
+      .btn-action:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+      .btn-action:disabled:hover {
+        border-color: var(--border);
+        color: var(--text);
+        background: var(--surface);
+      }
+      .btn-action svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+
+      /* ── Error ── */
+      .error-msg {
+        background: #1a0f0f;
+        border: 1px solid #3a1a1a;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--danger);
+        display: none;
+        line-height: 1.6;
+      }
+
+      /* ── Share Section ── */
+      .share-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        display: none;
+      }
+      .share-row {
+        display: flex;
+        gap: 8px;
+      }
+      .share-url-input {
+        flex: 1;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 13px;
+        color: var(--text-dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        outline: none;
+        cursor: text;
+        min-width: 0;
+      }
+      .share-url-input:focus {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+
+      /* ── Toast ── */
+      .toast {
+        position: fixed;
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: var(--accent);
+        color: #000;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 9px 18px;
+        border-radius: 100px;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 999;
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast.error {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      /* ── Modal ── */
+      .img-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.88);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        gap: 16px;
+      }
+      .img-modal-hint {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        color: #aaa;
+        text-align: center;
+        line-height: 1.7;
+      }
+      .img-modal-hint strong {
+        color: var(--accent);
+      }
+      .img-modal-img {
+        max-width: 100%;
+        max-height: 65vh;
+        border-radius: var(--radius);
+        display: block;
+      }
+      .img-modal-close {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 8px 24px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .img-modal-close:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* ── Settings Modal ── */
+      .settings-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+        z-index: 500;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+      }
+      @media (min-height: 520px) {
+        .settings-modal-overlay {
+          align-items: center;
+          padding: 16px;
+        }
+      }
+
+      .settings-modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px 10px 0 0;
+        width: 100%;
+        max-width: 560px;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      @media (min-height: 520px) {
+        .settings-modal {
+          border-radius: 10px;
+          animation: fadeScale 0.2s ease;
+        }
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(60px);
+          opacity: 0;
+        }
+      }
+      @keyframes fadeScale {
+        from {
+          transform: scale(0.96);
+          opacity: 0;
+        }
+      }
+
+      .settings-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        gap: 10px;
+      }
+      .settings-modal-title {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .settings-modal-close {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-dim);
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .settings-modal-close:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .settings-modal-close svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .settings-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .modal-sec-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .settings-modal-footer {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .btn-modal-dismiss {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .btn-modal-dismiss:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-modal-save {
+        flex: 1;
+        background: var(--accent-dim);
+        border: 1px solid var(--accent);
+        border-radius: var(--radius);
+        padding: 9px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-modal-save:hover {
+        background: var(--accent);
+        color: #000;
+      }
+      .btn-modal-reload {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        border-radius: var(--radius);
+        padding: 9px 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+      }
+      .btn-modal-reload:hover {
+        opacity: 0.85;
+      }
+      .btn-modal-reload svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .modal-manual-note {
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.65;
+        padding: 10px 12px;
+        border: 1px dashed var(--border);
+        border-radius: 4px;
+      }
+      .modal-manual-note strong {
+        color: var(--accent);
+      }
+
+      /* ── Sink Shortlink Modal ── */
+      .sink-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+        z-index: 500;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+      }
+      @media (min-height: 520px) {
+        .sink-modal-overlay {
+          align-items: center;
+          padding: 16px;
+        }
+      }
+      .sink-modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px 10px 0 0;
+        width: 100%;
+        max-width: 420px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      @media (min-height: 520px) {
+        .sink-modal {
+          border-radius: 10px;
+          animation: fadeScale 0.2s ease;
+        }
+      }
+      .sink-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .sink-modal-title {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        color: var(--text);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .sink-modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+      }
+      .sink-modal-close:hover { color: var(--text); }
+      .sink-modal-close svg { width: 16px; height: 16px; }
+      .sink-modal-body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .sink-note {
+        font-size: 11px;
+        color: var(--text-dim);
+        line-height: 1.6;
+        background: var(--accent-dim);
+        border-left: 2px solid var(--accent);
+        padding: 8px 10px;
+        border-radius: 3px;
+        margin-bottom: 6px;
+      }
+      .sink-input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 12px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .sink-input:focus { border-color: var(--accent); }
+      .sink-input::placeholder { color: var(--text-dim); }
+      .sink-modal-footer {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="index.html" class="logo">◈ Sheet Viewer</a>
+      <div class="status-pill">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Sedia</span>
+      </div>
+    </header>
+
+    <div class="main">
+      <!-- ① Sheet Input -->
+      <div class="sheet-input-section">
+        <div>
+          <div class="gid-list-header">
+            <div class="gid-list-header-left">
+              <span class="sec-label" style="margin: 0">Senarai URL Sheet</span>
+              <span class="gid-count" id="gidCount">0/0</span>
+            </div>
+            <div class="gid-list-header-right">
+              <button class="btn-icon" onclick="addSheetRow()" title="Tambah URL sheet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <button class="btn-gid-toggle" id="btnGidToggle" onclick="toggleGidList()" title="Kembang / Runtuh senarai">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="gid-list-wrap" id="gidListWrap">
+            <div class="gid-list" id="gidList"></div>
+          </div>
+        </div>
+
+        <div class="sheet-input-footer">
+          <button class="btn-primary" id="btnLoadAll" onclick="loadAll()">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <polygon points="6,3 21,12 6,21" />
+            </svg>
+            MUAT SEMUA
+          </button>
+        </div>
+      </div>
+
+      <!-- ② Toggle Bar -->
+      <div class="toggle-bar">
+        <button
+          class="btn-toggle"
+          id="btnToggleCrop"
+          onclick="toggleSection('cropSection', 'btnToggleCrop')"
+        >
+          <span class="toggle-dot"></span>Tetapan Crop
+          <span id="cropSheetLabel" class="toggle-sheet-label"></span>
+        </button>
+      </div>
+
+      <!-- ③ PDF Params -->
+      <div class="params-section" id="paramsSection" style="display: none">
+        <div class="params-grid">
+          <div class="param-field">
+            <label>Saiz Kertas</label>
+            <select class="param-select" id="pSize" onchange="onParamChange()">
+              <option value="">— Auto —</option>
+              <option value="7" selected>A4</option>
+              <option value="6">A3</option>
+              <option value="8">A5</option>
+              <option value="0">Letter</option>
+              <option value="2">Legal</option>
+              <option value="1">Tabloid</option>
+              <option value="9">B4</option>
+              <option value="10">B5</option>
+            </select>
+          </div>
+          <div class="param-field">
+            <label>Orientasi</label>
+            <select class="param-select" id="pPortrait" onchange="onParamChange()">
+              <option value="">— Auto —</option>
+              <option value="true" selected>Portrait</option>
+              <option value="false">Landscape</option>
+            </select>
+          </div>
+          <div class="param-field">
+            <label>Skala</label>
+            <select class="param-select" id="pScale" onchange="onParamChange()">
+              <option value="">— Auto —</option>
+              <option value="1" selected>1 — Normal</option>
+              <option value="2">2 — Fit Lebar</option>
+              <option value="3">3 — Fit Tinggi</option>
+              <option value="4">4 — Fit Halaman</option>
+            </select>
+          </div>
+          <div class="param-field">
+            <label>Range</label>
+            <input
+              type="text"
+              class="param-input"
+              id="pRange"
+              placeholder="A1:Z50"
+              oninput="onParamChange()"
+            />
+          </div>
+        </div>
+        <div class="adv-section" id="advParams">
+          <div class="adv-header" onclick="toggleAdv('advParams')">
+            <span class="adv-label">Margin</span>
+            <svg
+              class="adv-chevron"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+          <div class="adv-body">
+            <div class="adv-body-inner">
+              <div class="params-grid" style="margin-bottom: 10px">
+                <div class="param-field">
+                  <label>Atas (inci)</label>
+                  <input
+                    type="number"
+                    class="param-input"
+                    id="pMarginTop"
+                    placeholder="0.75"
+                    min="0"
+                    step="0.01"
+                    oninput="onParamChange()"
+                  />
+                </div>
+                <div class="param-field">
+                  <label>Bawah (inci)</label>
+                  <input
+                    type="number"
+                    class="param-input"
+                    id="pMarginBottom"
+                    placeholder="0.75"
+                    min="0"
+                    step="0.01"
+                    oninput="onParamChange()"
+                  />
+                </div>
+                <div class="param-field">
+                  <label>Kiri (inci)</label>
+                  <input
+                    type="number"
+                    class="param-input"
+                    id="pMarginLeft"
+                    placeholder="0.7"
+                    min="0"
+                    step="0.01"
+                    oninput="onParamChange()"
+                  />
+                </div>
+                <div class="param-field">
+                  <label>Kanan (inci)</label>
+                  <input
+                    type="number"
+                    class="param-input"
+                    id="pMarginRight"
+                    placeholder="0.7"
+                    min="0"
+                    step="0.01"
+                    oninput="onParamChange()"
+                  />
+                </div>
+              </div>
+              <div class="crop-presets" style="margin-top: 0">
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 9px;
+                    color: var(--text-dim);
+                  "
+                  >MARGIN:</span
+                >
+                <button class="preset-btn" onclick="setMarginPreset(0.75, 0.75, 0.7, 0.7)">
+                  Normal
+                </button>
+                <button class="preset-btn" onclick="setMarginPreset(0.25, 0.25, 0.25, 0.25)">
+                  Sempit
+                </button>
+                <button class="preset-btn" onclick="setMarginPreset(1, 1, 1, 1)">Luas</button>
+                <button class="preset-btn" onclick="setMarginPreset(0, 0, 0, 0)">Tiada</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ Crop Section -->
+      <div class="crop-section" id="cropSection" style="display: none">
+        <div class="crop-tabs">
+          <button class="tab-btn active" id="tabAuto" onclick="switchTab('auto')">Auto</button>
+          <button class="tab-btn" id="tabManual" onclick="switchTab('manual')">Manual</button>
+          <button class="tab-btn" id="tabNone" onclick="switchTab('none')">Tiada</button>
+        </div>
+
+        <div class="auto-crop-panel visible" id="autoCropPanel">
+          <div class="crop-presets" style="padding-top: 2px">
+            <span
+              style="
+                font-family: &quot;IBM Plex Mono&quot;, monospace;
+                font-size: 9px;
+                color: var(--text-dim);
+              "
+              >PRATETAP:</span
+            >
+            <button class="preset-btn" onclick="setPreset(0, 0, 100, 50)">½ Atas</button>
+            <button class="preset-btn" onclick="setPreset(0, 50, 100, 50)">½ Bawah</button>
+            <button class="preset-btn" onclick="setPreset(0, 0, 50, 100)">½ Kiri</button>
+            <button class="preset-btn" onclick="setPreset(50, 0, 50, 100)">½ Kanan</button>
+            <button class="preset-btn" onclick="setPreset(0, 0, 100, 100)">Penuh</button>
+          </div>
+          <div class="adv-section" id="advCrop">
+            <div class="adv-header" onclick="toggleAdv('advCrop')">
+              <span class="adv-label">Lanjutan</span>
+              <svg
+                class="adv-chevron"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+            <div class="adv-body">
+              <div class="adv-body-inner">
+                <div class="crop-grid" style="margin-bottom: 10px">
+                  <div class="crop-field">
+                    <label>X — kiri (%)</label>
+                    <input
+                      type="number"
+                      class="crop-input"
+                      id="cropX"
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                  <div class="crop-field">
+                    <label>Y — atas (%)</label>
+                    <input
+                      type="number"
+                      class="crop-input"
+                      id="cropY"
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                  <div class="crop-field">
+                    <label>Lebar (%)</label>
+                    <input
+                      type="number"
+                      class="crop-input"
+                      id="cropW"
+                      placeholder="100"
+                      min="1"
+                      max="100"
+                    />
+                  </div>
+                  <div class="crop-field">
+                    <label>Tinggi (%)</label>
+                    <input
+                      type="number"
+                      class="crop-input"
+                      id="cropH"
+                      placeholder="100"
+                      min="1"
+                      max="100"
+                    />
+                  </div>
+                </div>
+                <p class="crop-hint">
+                  Nilai dalam <strong>peratus (%)</strong> daripada saiz gambar penuh.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-crop-panel" id="manualCropPanel">
+          <p class="manual-hint">
+            Selepas gambar dimuatkan, <strong>klik dan seret</strong> pada gambar untuk pilih
+            kawasan. Kemudian tekan <strong>Guna Crop</strong>.
+          </p>
+          <div class="crop-coords">
+            <span class="coord-badge" id="coordDisplay">Tiada pilihan</span>
+            <button class="btn-reset-crop" onclick="resetManualCrop()">Buang</button>
+            <button
+              class="btn-export-crop"
+              id="btnExportCrop"
+              onclick="exportToAutoCrop()"
+              disabled
+            >
+              Eksport ke Auto
+            </button>
+            <button class="btn-apply-crop" id="btnApplyCrop" onclick="applyManualCrop()" disabled>
+              Guna Crop
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ Error -->
+      <div class="error-msg" id="errorMsg"></div>
+
+      <!-- ⑥ Info Bar -->
+      <div class="info-bar" id="infoBar">
+        <span id="infoText">—</span>
+        <span id="infoSize">—</span>
+      </div>
+
+      <!-- ⑦ Navigation -->
+      <div class="nav-row" id="navRow" style="display: none">
+        <button class="btn-nav" id="btnPrev" onclick="navigatePrev()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span class="nav-label" id="navLabel">—</span>
+        <button class="btn-nav" id="btnNext" onclick="navigateNext()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- ⑧ Canvas -->
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <div class="placeholder" id="placeholder">
+          <div class="placeholder-icon">⊞</div>
+          <p>
+            Masukkan URL Spreadsheet dan GID<br />kemudian tekan
+            <strong style="color: var(--accent)">MUAT SEMUA</strong>
+          </p>
+        </div>
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+          <span class="loading-text" id="loadingText">Memuat...</span>
+        </div>
+        <div class="img-preview-container" id="imgContainer">
+          <div class="canvas-crop-container" id="cropContainer">
+            <canvas id="pdfCanvas"></canvas>
+            <div id="selectionBox"></div>
+          </div>
+        </div>
+        <div class="dots-row" id="dotsRow"></div>
+      </div>
+
+      <!-- ⑨ Actions -->
+      <div class="actions">
+        <button class="btn-action" id="btnCopy" onclick="copyImage()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+          </svg>
+          Salin
+        </button>
+        <button class="btn-action" id="btnSave" onclick="saveImage()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Simpan
+        </button>
+        <button
+          class="btn-action"
+          id="btnShareAll"
+          onclick="shareAll()"
+          disabled
+          style="display: none"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+          Kongsi Semua
+        </button>
+      </div>
+
+      <!-- ⑩ Share URL -->
+      <div class="share-section" id="shareSection">
+        <span class="sec-label">URL Kongsi</span>
+        <div class="share-row">
+          <input
+            type="text"
+            class="share-url-input"
+            id="shareUrlInput"
+            readonly
+            placeholder="Muatkan imej dahulu..."
+          />
+          <button class="btn-icon" onclick="openSinkModal()" title="Tetapan Shortlink (Sink)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+          </button>
+          <button class="btn-icon" id="btnShorten" onclick="createShortlink()"
+            title="Jana shortlink" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+          </button>
+          <button class="btn-primary" onclick="copyShareUrl()" style="padding: 9px 14px">
+            SALIN
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- /main -->
+
+    <!-- Settings Modal -->
+    <div
+      class="settings-modal-overlay"
+      id="settingsModalOverlay"
+      onclick="closeSettingsModal(event)"
+      style="display: none"
+    >
+      <div class="settings-modal">
+        <div class="settings-modal-header">
+          <span class="settings-modal-title" id="settingsModalTitle">Tetapan Sheet</span>
+          <button class="settings-modal-close" onclick="closeSettingsModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="settings-modal-body">
+          <!-- PDF Params -->
+          <div>
+            <span class="modal-sec-label">Parameter PDF</span>
+            <div class="params-grid">
+              <div class="param-field">
+                <label>Saiz Kertas</label>
+                <select class="param-select" id="mPSize">
+                  <option value="">— Auto —</option>
+                  <option value="7">A4</option>
+                  <option value="6">A3</option>
+                  <option value="8">A5</option>
+                  <option value="0">Letter</option>
+                  <option value="2">Legal</option>
+                  <option value="1">Tabloid</option>
+                  <option value="9">B4</option>
+                  <option value="10">B5</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label>Orientasi</label>
+                <select class="param-select" id="mPPortrait">
+                  <option value="">— Auto —</option>
+                  <option value="true">Portrait</option>
+                  <option value="false">Landscape</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label>Skala</label>
+                <select class="param-select" id="mPScale">
+                  <option value="">— Auto —</option>
+                  <option value="1">1 — Normal</option>
+                  <option value="2">2 — Fit Lebar</option>
+                  <option value="3">3 — Fit Tinggi</option>
+                  <option value="4">4 — Fit Halaman</option>
+                </select>
+              </div>
+              <div class="param-field">
+                <label>Range</label>
+                <input type="text" class="param-input" id="mPRange" placeholder="A1:Z50" />
+              </div>
+            </div>
+            <div class="adv-section" id="mAdvMargin" style="margin-top: 8px">
+              <div class="adv-header" onclick="toggleAdv('mAdvMargin')">
+                <span class="adv-label">Margin</span>
+                <svg
+                  class="adv-chevron"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+              <div class="adv-body">
+                <div class="adv-body-inner">
+                  <div class="params-grid" style="margin-bottom: 10px">
+                    <div class="param-field">
+                      <label>Atas (inci)</label>
+                      <input
+                        type="number"
+                        class="param-input"
+                        id="mMarginTop"
+                        placeholder="0.75"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div class="param-field">
+                      <label>Bawah (inci)</label>
+                      <input
+                        type="number"
+                        class="param-input"
+                        id="mMarginBottom"
+                        placeholder="0.75"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div class="param-field">
+                      <label>Kiri (inci)</label>
+                      <input
+                        type="number"
+                        class="param-input"
+                        id="mMarginLeft"
+                        placeholder="0.7"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div class="param-field">
+                      <label>Kanan (inci)</label>
+                      <input
+                        type="number"
+                        class="param-input"
+                        id="mMarginRight"
+                        placeholder="0.7"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+                  <div class="crop-presets" style="margin-top: 0">
+                    <span
+                      style="
+                        font-family: &quot;IBM Plex Mono&quot;, monospace;
+                        font-size: 9px;
+                        color: var(--text-dim);
+                      "
+                      >MARGIN:</span
+                    >
+                    <button
+                      class="preset-btn"
+                      onclick="setMModalMarginPreset(0.75, 0.75, 0.7, 0.7)"
+                    >
+                      Normal
+                    </button>
+                    <button
+                      class="preset-btn"
+                      onclick="setMModalMarginPreset(0.25, 0.25, 0.25, 0.25)"
+                    >
+                      Sempit
+                    </button>
+                    <button class="preset-btn" onclick="setMModalMarginPreset(1, 1, 1, 1)">
+                      Luas
+                    </button>
+                    <button class="preset-btn" onclick="setMModalMarginPreset(0, 0, 0, 0)">
+                      Tiada
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crop -->
+          <div>
+            <span class="modal-sec-label">Tetapan Crop</span>
+            <div class="crop-tabs" style="margin-bottom: 12px">
+              <button class="tab-btn active" id="mTabAuto" onclick="switchModalTab('auto')">
+                Auto
+              </button>
+              <button class="tab-btn" id="mTabManual" onclick="switchModalTab('manual')">
+                Manual
+              </button>
+              <button class="tab-btn" id="mTabNone" onclick="switchModalTab('none')">Tiada</button>
+            </div>
+
+            <div id="mAutoCropPanel">
+              <div class="crop-presets" style="margin-bottom: 10px">
+                <span
+                  style="
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                    font-size: 9px;
+                    color: var(--text-dim);
+                  "
+                  >PRATETAP:</span
+                >
+                <button class="preset-btn" onclick="setMModalPreset(0, 0, 100, 50)">½ Atas</button>
+                <button class="preset-btn" onclick="setMModalPreset(0, 50, 100, 50)">
+                  ½ Bawah
+                </button>
+                <button class="preset-btn" onclick="setMModalPreset(0, 0, 50, 100)">½ Kiri</button>
+                <button class="preset-btn" onclick="setMModalPreset(50, 0, 50, 100)">
+                  ½ Kanan
+                </button>
+                <button class="preset-btn" onclick="setMModalPreset(0, 0, 100, 100)">Penuh</button>
+              </div>
+              <div class="crop-grid">
+                <div class="crop-field">
+                  <label>X — kiri (%)</label>
+                  <input
+                    type="number"
+                    class="crop-input"
+                    id="mCropX"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div class="crop-field">
+                  <label>Y — atas (%)</label>
+                  <input
+                    type="number"
+                    class="crop-input"
+                    id="mCropY"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div class="crop-field">
+                  <label>Lebar (%)</label>
+                  <input
+                    type="number"
+                    class="crop-input"
+                    id="mCropW"
+                    placeholder="100"
+                    min="1"
+                    max="100"
+                  />
+                </div>
+                <div class="crop-field">
+                  <label>Tinggi (%)</label>
+                  <input
+                    type="number"
+                    class="crop-input"
+                    id="mCropH"
+                    placeholder="100"
+                    min="1"
+                    max="100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div id="mManualCropPanel" style="display: none">
+              <p class="modal-manual-note">
+                Pilihan kawasan manual hanya boleh dibuat pada <strong>kanvas utama</strong>.<br />
+                Tukar ke sheet ini, kemudian guna tab <strong>Manual</strong> dalam Tetapan Crop.
+              </p>
+              <div style="margin-top: 10px">
+                <span class="coord-badge" id="mCoordDisplay">Tiada pilihan manual</span>
+              </div>
+            </div>
+
+            <div id="mNoneCropPanel" style="display: none">
+              <p class="crop-hint">Gambar penuh tanpa sebarang crop.</p>
+            </div>
+          </div>
+        </div>
+        <!-- /body -->
+
+        <div class="settings-modal-footer">
+          <button class="btn-modal-dismiss" onclick="closeSettingsModal()">Tutup</button>
+          <button class="btn-modal-save" onclick="saveModalSettings()">Simpan</button>
+          <button class="btn-modal-reload" onclick="saveAndReloadModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 .49-4.5" />
+            </svg>
+            Simpan &amp; Muat Semula
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+      const PROXY = "https://gsheetproxy.uncle.workers.dev";
+      const shareSupported = !!navigator.share;
+
+      if (shareSupported) document.getElementById("btnShareAll").style.display = "";
+
+      // ── State ──
+      const state = {
+        sheets: [],
+      };
+      let currentIndex = 0;
+
+      // ── Canvas state ──
+      let renderedCanvas = null;
+      let currentCanvas = null;
+      let cropMode = "auto";
+      let isDragging = false;
+      let dragStart = { x: 0, y: 0 },
+        dragCurrent = { x: 0, y: 0 };
+      let manualCropRect = null;
+      let dragController = null;
+      let swipeStartX = 0;
+      let uiInitialized = false;
+
+      // ── Helpers ──
+      function setStatus(s, text) {
+        document.getElementById("statusDot").className = "status-dot" + (s ? " " + s : "");
+        document.getElementById("statusText").textContent = text;
+      }
+
+      function showToast(msg, isError = false) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = "toast" + (isError ? " error" : "");
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2800);
+      }
+
+      function showError(msg) {
+        const el = document.getElementById("errorMsg");
+        el.style.display = "block";
+        el.textContent = "⚠ " + msg;
+      }
+
+      function hideError() {
+        document.getElementById("errorMsg").style.display = "none";
+      }
+
+      // ── URL helpers ──
+      function normalizeToExportUrl(raw, params) {
+        raw = (raw || "").trim();
+        if (!raw) return null;
+        if (raw.includes("/export")) return raw;
+        const idM = raw.match(/\/spreadsheets\/d\/([^\/\?#]+)/);
+        if (!idM) return null;
+        const id = idM[1];
+        const gidM = raw.match(/[?&]gid=(\d+)/) || raw.match(/#gid=(\d+)/);
+        const gid = gidM ? gidM[1] : "0";
+        const p = params || {};
+        let url = `https://docs.google.com/spreadsheets/d/${id}/export?format=pdf&gid=${gid}`;
+        if (p.size) url += `&size=${p.size}`;
+        if (p.portrait) url += `&portrait=${p.portrait}`;
+        if (p.scale) url += `&scale=${p.scale}`;
+        if (p.range) url += `&range=${encodeURIComponent(p.range)}`;
+        if (p.top_margin) url += `&top_margin=${p.top_margin}`;
+        if (p.bottom_margin) url += `&bottom_margin=${p.bottom_margin}`;
+        if (p.left_margin) url += `&left_margin=${p.left_margin}`;
+        if (p.right_margin) url += `&right_margin=${p.right_margin}`;
+        return url;
+      }
+
+      function urlShort(url) {
+        if (!url) return "—";
+        const idM = url.match(/\/spreadsheets\/d\/([^\/\?#]{6,12})/);
+        return idM ? "…" + idM[1].slice(0, 8) : url.slice(0, 28) + "…";
+      }
+
+      // ── Section toggles ──
+      function toggleSection(sectionId, btnId) {
+        const section = document.getElementById(sectionId);
+        const btn = document.getElementById(btnId);
+        const hide = section.style.display !== "none";
+        section.style.display = hide ? "none" : "";
+        btn.classList.toggle("active", !hide);
+      }
+
+      function toggleAdv(id) {
+        document.getElementById(id).classList.toggle("open");
+      }
+
+      // ── Params ──
+      function getParams() {
+        return {
+          size: document.getElementById("pSize").value,
+          portrait: document.getElementById("pPortrait").value,
+          scale: document.getElementById("pScale").value,
+          range: document.getElementById("pRange").value.trim(),
+          top_margin: document.getElementById("pMarginTop").value.trim(),
+          bottom_margin: document.getElementById("pMarginBottom").value.trim(),
+          left_margin: document.getElementById("pMarginLeft").value.trim(),
+          right_margin: document.getElementById("pMarginRight").value.trim(),
+        };
+      }
+
+      function setParams(p) {
+        document.getElementById("pSize").value = p.size ?? "";
+        document.getElementById("pPortrait").value = p.portrait ?? "";
+        document.getElementById("pScale").value = p.scale ?? "";
+        document.getElementById("pRange").value = p.range ?? "";
+        document.getElementById("pMarginTop").value = p.top_margin ?? "";
+        document.getElementById("pMarginBottom").value = p.bottom_margin ?? "";
+        document.getElementById("pMarginLeft").value = p.left_margin ?? "";
+        document.getElementById("pMarginRight").value = p.right_margin ?? "";
+      }
+
+      function onParamChange() {
+        updateShareUrl();
+      }
+
+      function setMarginPreset(top, bottom, left, right) {
+        document.getElementById("pMarginTop").value = top;
+        document.getElementById("pMarginBottom").value = bottom;
+        document.getElementById("pMarginLeft").value = left;
+        document.getElementById("pMarginRight").value = right;
+        onParamChange();
+      }
+
+      // ── Build export URL ──
+      function buildExportUrl(sheet) {
+        const raw = typeof sheet === "object" ? sheet.url : sheet;
+        const p = typeof sheet === "object" && sheet.params ? sheet.params : {};
+        return normalizeToExportUrl(raw, p);
+      }
+
+      // ── Paste into row ──
+      async function pasteRowUrl(index) {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (!text.trim()) { showToast("Clipboard kosong", true); return; }
+          const input = document.getElementById("urlRowInput" + index);
+          if (input) { input.value = text.trim(); onSheetChange(index, "url", text.trim()); }
+          showToast("✓ Ditampal");
+        } catch {
+          showToast("Tidak dapat akses clipboard", true);
+        }
+      }
+
+      // ── Sheet list ──
+      function addSheetRow(url = "", label = "", params = null, crop = null) {
+        state.sheets.push({
+          url,
+          label,
+          enabled: true,
+          status: "idle",
+          canvas: null,
+          errorMsg: null,
+          crop: crop || { mode: "auto", x: 0, y: 0, w: 100, h: 100, manualRect: null },
+          params: params
+            ? { ...params }
+            : { size: "7", portrait: "true", scale: "1", range: "",
+                top_margin: "", bottom_margin: "", left_margin: "", right_margin: "" },
+        });
+        renderSheetList();
+      }
+
+      function removeSheetRow(index) {
+        state.sheets.splice(index, 1);
+        if (currentIndex >= state.sheets.length)
+          currentIndex = Math.max(0, state.sheets.length - 1);
+        renderSheetList();
+        renderDots();
+        updateNavUI();
+        updateShareUrl();
+      }
+
+      function onSheetChange(index, field, value) {
+        if (state.sheets[index]) {
+          state.sheets[index][field] = value;
+        }
+        updateShareUrl();
+      }
+
+      function onEnabledChange(index, checked) {
+        if (state.sheets[index]) {
+          state.sheets[index].enabled = checked;
+          const row = document.getElementById("gidList").children[index];
+          if (row) row.className = "gid-row" + (checked ? "" : " disabled");
+        }
+        updateGidCount();
+        updateShareUrl();
+      }
+
+      let gidListOpen = false;
+
+      function toggleGidList() {
+        gidListOpen = !gidListOpen;
+        document.getElementById("gidListWrap").style.display = gidListOpen ? "block" : "none";
+        const btn = document.getElementById("btnGidToggle");
+        if (btn) btn.classList.toggle("open", gidListOpen);
+      }
+
+      function updateGidCount() {
+        const total = state.sheets.length;
+        const enabled = state.sheets.filter((s) => s.enabled !== false).length;
+        const el = document.getElementById("gidCount");
+        if (el) el.textContent = total === 0 ? "0" : `${enabled}/${total}`;
+      }
+
+      function renderSheetList() {
+        const list = document.getElementById("gidList");
+        list.innerHTML = "";
+        state.sheets.forEach((sheet, i) => {
+          const row = document.createElement("div");
+          const isEnabled = sheet.enabled !== false;
+          row.className = "gid-row" + (isEnabled ? "" : " disabled");
+          const statusClass = sheet.status === "idle" ? "" : sheet.status;
+          row.innerHTML = `
+            <input type="checkbox" class="gid-check" ${isEnabled ? "checked" : ""}
+              onchange="onEnabledChange(${i}, this.checked)" title="Sertakan dalam URL Kongsi" />
+            <span class="gid-num">#${i + 1}</span>
+            <input class="gid-label-input" type="text" id="urlRowInput${i}"
+              placeholder="https://docs.google.com/spreadsheets/d/…"
+              value="${escHtml(sheet.url)}"
+              oninput="onSheetChange(${i},'url',this.value)"
+              style="font-size:10px;color:var(--text-dim)" />
+            <span class="gid-status-dot ${statusClass}" id="gidDot${i}"
+              title="${escHtml(sheet.errorMsg || sheet.label || urlShort(sheet.url))}"></span>
+            <button class="btn-gid" onclick="pasteRowUrl(${i})" title="Tampal URL dari clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="2" width="6" height="4" rx="1"/>
+                <path d="M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-2"/>
+                <rect x="7" y="10" width="10" height="2" rx="0.5"/>
+                <rect x="7" y="14" width="7" height="2" rx="0.5"/>
+              </svg>
+            </button>
+            <button class="btn-gid" onclick="openSettingsModal(${i})" title="Tetapan crop & label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+            </button>
+            <button class="btn-gid" onclick="reloadSheet(${i})" title="Muat semula">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+              </svg>
+            </button>
+            <button class="btn-gid remove" onclick="removeSheetRow(${i})" title="Padam">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <input class="gid-name-input" type="text"
+              placeholder="Nama sheet (pilihan)"
+              value="${escHtml(sheet.label || '')}"
+              oninput="onSheetChange(${i},'label',this.value)" />`;
+          list.appendChild(row);
+        });
+        updateGidCount();
+      }
+
+      function escHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;");
+      }
+
+      function updateGidDot(index) {
+        const dot = document.getElementById("gidDot" + index);
+        if (!dot) return;
+        const sheet = state.sheets[index];
+        dot.className = "gid-status-dot " + (sheet.status === "idle" ? "" : sheet.status);
+        dot.title = sheet.errorMsg || sheet.status;
+      }
+
+      // ── Load ──
+      async function loadAll() {
+        if (state.sheets.length === 0) {
+          showToast("Tambah sekurang-kurangnya satu URL sheet", true);
+          return;
+        }
+        if (!state.sheets.some((s) => s.enabled !== false && (s.url || "").trim())) {
+          showToast("Masukkan URL Google Sheets untuk sheet yang diaktifkan", true);
+          return;
+        }
+        hideError();
+        setStatus("", "Memuat...");
+        document.getElementById("btnLoadAll").disabled = true;
+
+        await Promise.allSettled(state.sheets.map((_, i) => loadSingleSheet(i)));
+
+        document.getElementById("btnLoadAll").disabled = false;
+
+        const firstReady = state.sheets.findIndex((s) => s.status === "ready");
+        if (firstReady >= 0) {
+          navigateTo(firstReady);
+          setStatus("active", "Berjaya dimuatkan");
+          showToast("✓ Sheet dimuatkan");
+        } else {
+          setStatus("error", "Gagal");
+          showToast("Gagal muat semua sheet", true);
+        }
+
+        updateNavUI();
+        updateShareUrl();
+      }
+
+      async function loadSingleSheet(index) {
+        const sheet = state.sheets[index];
+        if (!sheet.url || !sheet.url.trim()) {
+          sheet.status = "error";
+          sheet.errorMsg = "URL kosong";
+          updateGidDot(index);
+          return;
+        }
+
+        sheet.status = "loading";
+        sheet.errorMsg = null;
+        updateGidDot(index);
+        renderDots();
+
+        const exportUrl = buildExportUrl(sheet);
+        if (!exportUrl) {
+          sheet.status = "error";
+          sheet.errorMsg = "URL tidak sah — masukkan URL Google Sheets yang betul";
+          updateGidDot(index);
+          return;
+        }
+
+        try {
+          const resp = await fetch(PROXY + "?url=" + encodeURIComponent(exportUrl));
+          if (!resp.ok) throw new Error("Gagal memuat. Pastikan sheet sudah public.");
+
+          const buf = await resp.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+          const page = await pdf.getPage(1);
+          const vp = page.getViewport({ scale: 3 });
+
+          const canvas = document.createElement("canvas");
+          canvas.width = vp.width;
+          canvas.height = vp.height;
+          await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+
+          sheet.canvas = canvas;
+          sheet.status = "ready";
+        } catch (err) {
+          sheet.status = "error";
+          sheet.errorMsg = err.message || "Ralat tidak diketahui";
+          sheet.canvas = null;
+        }
+
+        updateGidDot(index);
+        renderDots();
+        if (index === currentIndex) displaySheet(index);
+      }
+
+      async function reloadSheet(index) {
+        await loadSingleSheet(index);
+        if (index === currentIndex) displaySheet(index);
+        updateShareUrl();
+      }
+
+      // ── Navigation ──
+      function navigateTo(index) {
+        if (index < 0 || index >= state.sheets.length) return;
+        if (uiInitialized) saveSheetSettings();
+        currentIndex = index;
+        loadSheetSettings(index);
+        uiInitialized = true;
+        displaySheet(index);
+        updateNavUI();
+        updateShareUrl();
+      }
+
+      function navigatePrev() {
+        navigateTo(currentIndex - 1);
+      }
+      function navigateNext() {
+        navigateTo(currentIndex + 1);
+      }
+
+      function openSettings(index) {
+        navigateTo(index);
+        const cropSection = document.getElementById("cropSection");
+        const btnCrop = document.getElementById("btnToggleCrop");
+        if (cropSection.style.display === "none") {
+          cropSection.style.display = "";
+          btnCrop.classList.add("active");
+        }
+        setTimeout(
+          () => cropSection.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+          80,
+        );
+      }
+
+      function displaySheet(index) {
+        const sheet = state.sheets[index];
+        const placeholder = document.getElementById("placeholder");
+        const imgContainer = document.getElementById("imgContainer");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const infoBar = document.getElementById("infoBar");
+
+        if (!sheet) {
+          placeholder.style.display = "flex";
+          imgContainer.style.display = "none";
+          loadingOverlay.style.display = "none";
+          disableActions();
+          return;
+        }
+
+        if (sheet.status === "loading") {
+          placeholder.style.display = "none";
+          imgContainer.style.display = "none";
+          loadingOverlay.style.display = "flex";
+          document.getElementById("loadingText").textContent =
+            "Memuat " + (sheet.label || urlShort(sheet.url)) + "...";
+          infoBar.style.display = "none";
+          disableActions();
+          return;
+        }
+
+        if (sheet.status === "error") {
+          loadingOverlay.style.display = "none";
+          imgContainer.style.display = "none";
+          placeholder.style.display = "flex";
+          infoBar.style.display = "none";
+          showError(sheet.errorMsg || "Ralat tidak diketahui");
+          disableActions();
+          return;
+        }
+
+        if (sheet.status === "ready" && sheet.canvas) {
+          hideError();
+          loadingOverlay.style.display = "none";
+
+          const pdfCanvas = document.getElementById("pdfCanvas");
+          pdfCanvas.width = sheet.canvas.width;
+          pdfCanvas.height = sheet.canvas.height;
+          pdfCanvas.style.width = "100%";
+          pdfCanvas.style.height = "auto";
+          pdfCanvas.getContext("2d").drawImage(sheet.canvas, 0, 0);
+
+          renderedCanvas = pdfCanvas;
+          imgContainer.style.display = "block";
+          placeholder.style.display = "none";
+
+          const label = sheet.label || urlShort(sheet.url);
+          infoBar.style.display = "flex";
+          document.getElementById("infoText").textContent =
+            label + " · " + (currentIndex + 1) + " / " + state.sheets.length;
+          document.getElementById("infoSize").textContent =
+            sheet.canvas.width + " × " + sheet.canvas.height + "px";
+
+          applyCurrentCrop();
+          enableActions();
+          setupDrag();
+          requestAnimationFrame(() => updateCropOverlay());
+          return;
+        }
+
+        // idle
+        loadingOverlay.style.display = "none";
+        imgContainer.style.display = "none";
+        placeholder.style.display = "flex";
+        infoBar.style.display = "none";
+        disableActions();
+      }
+
+      function disableActions() {
+        document.getElementById("btnCopy").disabled = true;
+        document.getElementById("btnSave").disabled = true;
+        if (shareSupported) document.getElementById("btnShareAll").disabled = true;
+        renderedCanvas = null;
+        currentCanvas = null;
+      }
+
+      function enableActions() {
+        document.getElementById("btnCopy").disabled = false;
+        document.getElementById("btnSave").disabled = false;
+        if (shareSupported) document.getElementById("btnShareAll").disabled = false;
+      }
+
+      function updateNavUI() {
+        const total = state.sheets.length;
+        document.getElementById("navRow").style.display = total > 1 ? "" : "none";
+        document.getElementById("btnPrev").disabled = currentIndex <= 0;
+        document.getElementById("btnNext").disabled = currentIndex >= total - 1;
+
+        const sheet = state.sheets[currentIndex];
+        const label = sheet ? sheet.label || urlShort(sheet.url) : "—";
+        document.getElementById("navLabel").innerHTML =
+          "<strong>" +
+          escHtml(label) +
+          "</strong>&nbsp;&nbsp;" +
+          (currentIndex + 1) +
+          " / " +
+          total;
+
+        const sheetLbl = sheet ? sheet.label || "#" + (currentIndex + 1) : "";
+        const indicator = sheetLbl ? "— " + sheetLbl : "";
+        const csl = document.getElementById("cropSheetLabel");
+        if (csl) csl.textContent = indicator;
+
+        renderDots();
+      }
+
+      function renderDots() {
+        const row = document.getElementById("dotsRow");
+        if (state.sheets.length <= 1) {
+          row.innerHTML = "";
+          return;
+        }
+        row.innerHTML = "";
+        state.sheets.forEach((sheet, i) => {
+          const dot = document.createElement("span");
+          dot.className =
+            "dot" +
+            (i === currentIndex ? " active" : "") +
+            (sheet.status === "error" ? " error" : "") +
+            (sheet.status === "loading" ? " loading" : "");
+          dot.title = sheet.label || urlShort(sheet.url);
+          dot.onclick = () => navigateTo(i);
+          row.appendChild(dot);
+        });
+      }
+
+      // ── Swipe ──
+      function setupSwipe() {
+        const wrapper = document.getElementById("canvasWrapper");
+        wrapper.addEventListener(
+          "touchstart",
+          (e) => {
+            swipeStartX = e.touches[0].clientX;
+          },
+          { passive: true },
+        );
+        wrapper.addEventListener(
+          "touchend",
+          (e) => {
+            if (cropMode === "manual") return;
+            const dx = e.changedTouches[0].clientX - swipeStartX;
+            if (Math.abs(dx) > 50) {
+              dx < 0 ? navigateNext() : navigatePrev();
+            }
+          },
+          { passive: true },
+        );
+      }
+
+      // ── Settings per-sheet (params + crop) ──
+      function saveSheetSettings() {
+        const sheet = state.sheets[currentIndex];
+        if (!sheet) return;
+        // params diurus oleh settings modal, hanya simpan crop dari UI global
+        sheet.crop = {
+          mode: cropMode,
+          x: parseFloat(document.getElementById("cropX").value) || 0,
+          y: parseFloat(document.getElementById("cropY").value) || 0,
+          w: parseFloat(document.getElementById("cropW").value) || 100,
+          h: parseFloat(document.getElementById("cropH").value) || 100,
+          manualRect: manualCropRect ? { ...manualCropRect } : null,
+        };
+      }
+
+      function loadSheetSettings(index) {
+        const sheet = state.sheets[index];
+        const c = (sheet && sheet.crop) || { mode: "auto", x: 0, y: 0, w: 100, h: 100 };
+        manualCropRect = c.manualRect || null;
+        document.getElementById("cropX").value = c.x ?? 0;
+        document.getElementById("cropY").value = c.y ?? 0;
+        document.getElementById("cropW").value = c.w ?? 100;
+        document.getElementById("cropH").value = c.h ?? 100;
+
+        // Update manual UI
+        if (manualCropRect) {
+          document.getElementById("coordDisplay").textContent =
+            `X:${manualCropRect.x} Y:${manualCropRect.y} · ${manualCropRect.w}×${manualCropRect.h}px`;
+          document.getElementById("btnApplyCrop").disabled = false;
+          document.getElementById("btnExportCrop").disabled = false;
+        } else {
+          document.getElementById("coordDisplay").textContent = "Tiada pilihan";
+          document.getElementById("btnApplyCrop").disabled = true;
+          document.getElementById("btnExportCrop").disabled = true;
+        }
+
+        // Switch tab without re-triggering crop (set cropMode directly first)
+        cropMode = c.mode || "auto";
+        ["auto", "manual", "none"].forEach((t) => {
+          document
+            .getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1))
+            .classList.toggle("active", t === cropMode);
+        });
+        document.getElementById("autoCropPanel").classList.toggle("visible", cropMode === "auto");
+        document
+          .getElementById("manualCropPanel")
+          .classList.toggle("visible", cropMode === "manual");
+        document
+          .getElementById("canvasWrapper")
+          .classList.toggle("crop-mode", cropMode === "manual");
+        document.getElementById("selectionBox").style.display = "none";
+      }
+
+      // ── Crop Logic ──
+      function applyCurrentCrop() {
+        if (!renderedCanvas) return;
+        if (cropMode === "none") {
+          currentCanvas = renderedCanvas;
+          return;
+        }
+        if (cropMode === "auto") {
+          const W = renderedCanvas.width,
+            H = renderedCanvas.height;
+          const xP = parseFloat(document.getElementById("cropX").value) || 0;
+          const yP = parseFloat(document.getElementById("cropY").value) || 0;
+          const wP = parseFloat(document.getElementById("cropW").value) || 100;
+          const hP = parseFloat(document.getElementById("cropH").value) || 100;
+          currentCanvas = cropCanvas(
+            renderedCanvas,
+            Math.round((W * xP) / 100),
+            Math.round((H * yP) / 100),
+            Math.round((W * wP) / 100),
+            Math.round((H * hP) / 100),
+          );
+          document.getElementById("infoSize").textContent =
+            currentCanvas.width + " × " + currentCanvas.height + "px (crop)";
+        }
+      }
+
+      function applyManualCrop() {
+        if (!manualCropRect || !renderedCanvas) return;
+        const { x, y, w, h } = manualCropRect;
+        currentCanvas = cropCanvas(renderedCanvas, x, y, w, h);
+        document.getElementById("infoSize").textContent = w + " × " + h + "px (crop manual)";
+        enableActions();
+        showToast("✓ Manual crop digunakan");
+      }
+
+      function cropCanvas(src, x, y, w, h) {
+        x = Math.max(0, Math.min(x, src.width));
+        y = Math.max(0, Math.min(y, src.height));
+        w = Math.max(1, Math.min(w, src.width - x));
+        h = Math.max(1, Math.min(h, src.height - y));
+        const out = document.createElement("canvas");
+        out.width = w;
+        out.height = h;
+        out.getContext("2d").drawImage(src, x, y, w, h, 0, 0, w, h);
+        return out;
+      }
+
+      function resetManualCrop() {
+        manualCropRect = null;
+        document.getElementById("selectionBox").style.display = "none";
+        document.getElementById("coordDisplay").textContent = "Tiada pilihan";
+        document.getElementById("btnApplyCrop").disabled = true;
+        document.getElementById("btnExportCrop").disabled = true;
+        currentCanvas = renderedCanvas;
+        updateShareUrl();
+        showToast("Crop dibuang");
+      }
+
+      // ── Tabs ──
+      function switchTab(tab) {
+        cropMode = tab;
+        ["auto", "manual", "none"].forEach((t) => {
+          document
+            .getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1))
+            .classList.toggle("active", t === tab);
+        });
+        document.getElementById("autoCropPanel").classList.toggle("visible", tab === "auto");
+        document.getElementById("manualCropPanel").classList.toggle("visible", tab === "manual");
+        document.getElementById("canvasWrapper").classList.toggle("crop-mode", tab === "manual");
+        document.getElementById("selectionBox").style.display = "none";
+        if (renderedCanvas && tab !== "manual") applyCurrentCrop();
+        if (tab === "auto") updateCropOverlay();
+        else if (tab === "manual" && manualCropRect) showManualOverlay();
+        updateShareUrl();
+      }
+
+      function setPreset(x, y, w, h) {
+        document.getElementById("cropX").value = x;
+        document.getElementById("cropY").value = y;
+        document.getElementById("cropW").value = w;
+        document.getElementById("cropH").value = h;
+        if (renderedCanvas) applyCurrentCrop();
+        updateCropOverlay();
+      }
+
+      function exportToAutoCrop() {
+        if (!manualCropRect || !renderedCanvas) return;
+        const W = renderedCanvas.width,
+          H = renderedCanvas.height;
+        document.getElementById("cropX").value =
+          Math.round((manualCropRect.x / W) * 100 * 100) / 100;
+        document.getElementById("cropY").value =
+          Math.round((manualCropRect.y / H) * 100 * 100) / 100;
+        document.getElementById("cropW").value =
+          Math.round((manualCropRect.w / W) * 100 * 100) / 100;
+        document.getElementById("cropH").value =
+          Math.round((manualCropRect.h / H) * 100 * 100) / 100;
+        switchTab("auto");
+        showToast("✓ Nilai crop dieksport ke Auto");
+      }
+
+      // ── Crop Overlay ──
+      function updateCropOverlay() {
+        const box = document.getElementById("selectionBox");
+        if (!renderedCanvas || cropMode !== "auto") {
+          if (cropMode !== "manual") box.style.display = "none";
+          return;
+        }
+        const xP = parseFloat(document.getElementById("cropX").value) || 0;
+        const yP = parseFloat(document.getElementById("cropY").value) || 0;
+        const wP = parseFloat(document.getElementById("cropW").value) || 100;
+        const hP = parseFloat(document.getElementById("cropH").value) || 100;
+        if (xP === 0 && yP === 0 && wP >= 100 && hP >= 100) {
+          box.style.display = "none";
+          return;
+        }
+        const canvas = document.getElementById("pdfCanvas");
+        const dw = canvas.offsetWidth,
+          dh = canvas.offsetHeight;
+        if (!dw || !dh) return;
+        box.style.display = "block";
+        box.style.left = (dw * xP) / 100 + "px";
+        box.style.top = (dh * yP) / 100 + "px";
+        box.style.width = (dw * wP) / 100 + "px";
+        box.style.height = (dh * hP) / 100 + "px";
+      }
+
+      function showManualOverlay() {
+        if (!manualCropRect) return;
+        const canvas = document.getElementById("pdfCanvas");
+        const sx = canvas.width / canvas.offsetWidth;
+        const sy = canvas.height / canvas.offsetHeight;
+        const box = document.getElementById("selectionBox");
+        box.style.display = "block";
+        box.style.left = manualCropRect.x / sx + "px";
+        box.style.top = manualCropRect.y / sy + "px";
+        box.style.width = manualCropRect.w / sx + "px";
+        box.style.height = manualCropRect.h / sy + "px";
+      }
+
+      // ── Drag Selection ──
+      function setupDrag() {
+        if (dragController) dragController.abort();
+        dragController = new AbortController();
+        const { signal } = dragController;
+        const c = document.getElementById("pdfCanvas");
+        c.addEventListener("mousedown", onDragStart, { signal });
+        document.addEventListener("mousemove", onDragMove, { signal });
+        document.addEventListener("mouseup", onDragEnd, { signal });
+        c.addEventListener("touchstart", onTouchStart, { passive: false, signal });
+        document.addEventListener("touchmove", onTouchMove, { passive: false, signal });
+        document.addEventListener("touchend", onTouchEnd, { signal });
+      }
+
+      function getPos(canvas, clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ((clientX - rect.left) * canvas.width) / rect.width,
+          y: ((clientY - rect.top) * canvas.height) / rect.height,
+        };
+      }
+
+      function onDragStart(e) {
+        if (cropMode !== "manual") return;
+        isDragging = true;
+        dragStart = dragCurrent = getPos(e.target, e.clientX, e.clientY);
+        updateSelBox();
+      }
+
+      function onDragMove(e) {
+        if (!isDragging || cropMode !== "manual") return;
+        dragCurrent = getPos(document.getElementById("pdfCanvas"), e.clientX, e.clientY);
+        updateSelBox();
+      }
+
+      function onDragEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        dragCurrent = getPos(document.getElementById("pdfCanvas"), e.clientX, e.clientY);
+        finalizeSelection();
+      }
+
+      function onTouchStart(e) {
+        if (cropMode !== "manual") return;
+        e.preventDefault();
+        const t = e.touches[0];
+        isDragging = true;
+        dragStart = dragCurrent = getPos(
+          document.getElementById("pdfCanvas"),
+          t.clientX,
+          t.clientY,
+        );
+        updateSelBox();
+      }
+
+      function onTouchMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        dragCurrent = getPos(document.getElementById("pdfCanvas"), t.clientX, t.clientY);
+        updateSelBox();
+      }
+
+      function onTouchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        finalizeSelection();
+      }
+
+      function updateSelBox() {
+        const canvas = document.getElementById("pdfCanvas");
+        const rect = canvas.getBoundingClientRect();
+        const sx = canvas.width / rect.width;
+        const sy = canvas.height / rect.height;
+        const x1 = Math.min(dragStart.x, dragCurrent.x);
+        const y1 = Math.min(dragStart.y, dragCurrent.y);
+        const x2 = Math.max(dragStart.x, dragCurrent.x);
+        const y2 = Math.max(dragStart.y, dragCurrent.y);
+        const box = document.getElementById("selectionBox");
+        box.style.display = "block";
+        box.style.left = x1 / sx + "px";
+        box.style.top = y1 / sy + "px";
+        box.style.width = (x2 - x1) / sx + "px";
+        box.style.height = (y2 - y1) / sy + "px";
+      }
+
+      function finalizeSelection() {
+        const x1 = Math.round(Math.min(dragStart.x, dragCurrent.x));
+        const y1 = Math.round(Math.min(dragStart.y, dragCurrent.y));
+        const w = Math.round(Math.abs(dragCurrent.x - dragStart.x));
+        const h = Math.round(Math.abs(dragCurrent.y - dragStart.y));
+        if (w < 10 || h < 10) return;
+        manualCropRect = { x: x1, y: y1, w, h };
+        document.getElementById("coordDisplay").textContent = `X:${x1} Y:${y1} · ${w}×${h}px`;
+        document.getElementById("btnApplyCrop").disabled = false;
+        document.getElementById("btnExportCrop").disabled = false;
+        updateShareUrl();
+      }
+
+      // ── Share URL ──
+      function buildShareUrl() {
+        if (state.sheets.length === 0) return "";
+        if (uiInitialized) saveSheetSettings();
+        const base = window.location.origin + window.location.pathname;
+
+        const activeSheets = state.sheets.filter((s) => s.enabled !== false && (s.url || "").trim());
+        if (activeSheets.length === 0) return "";
+
+        const config = activeSheets.map((s) => {
+          const c = s.crop || { mode: "auto", x: 0, y: 0, w: 100, h: 100 };
+          const p = s.params || {};
+          return {
+            url: s.url,
+            label: s.label || "",
+            crop: { mode: c.mode, x: c.x ?? 0, y: c.y ?? 0, w: c.w ?? 100, h: c.h ?? 100 },
+            params: {
+              size: p.size || "", portrait: p.portrait || "", scale: p.scale || "",
+              range: p.range || "", top_margin: p.top_margin || "",
+              bottom_margin: p.bottom_margin || "", left_margin: p.left_margin || "",
+              right_margin: p.right_margin || "",
+            },
+          };
+        });
+
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(config))));
+        return `${base}?config=${encodeURIComponent(encoded)}`;
+      }
+
+      function updateShareUrl() {
+        const url = buildShareUrl();
+        if (!url) return;
+        document.getElementById("shareSection").style.display = "block";
+        updateGidCount();
+        if (sinkSlug) {
+          const { url: sinkUrl } = getSinkConfig();
+          document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+          upsertShortlink(url);
+        } else {
+          document.getElementById("shareUrlInput").value = url;
+        }
+      }
+
+      async function copyShareUrl() {
+        const val = document.getElementById("shareUrlInput").value;
+        if (!val) return;
+        try {
+          await navigator.clipboard.writeText(val);
+          showToast("✓ URL dikongsi disalin");
+        } catch {
+          document.getElementById("shareUrlInput").select();
+          showToast("Pilih dan salin URL secara manual", true);
+        }
+      }
+
+      // ── Copy / Save / Share ──
+      function showCopyFallback() {
+        const existing = document.getElementById("imgModal");
+        if (existing) existing.remove();
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+        const hint = isIOS
+          ? "Tekan lama pada gambar di bawah<br><strong>→ Salin / Simpan ke Foto</strong>"
+          : "Klik kanan pada gambar di bawah<br><strong>→ Salin Gambar</strong>";
+        const modal = document.createElement("div");
+        modal.id = "imgModal";
+        modal.className = "img-modal-overlay";
+        modal.innerHTML = `
+          <p class="img-modal-hint">${hint}</p>
+          <img src="${currentCanvas.toDataURL("image/png")}" class="img-modal-img" />
+          <button class="img-modal-close" onclick="document.getElementById('imgModal').remove()">Tutup</button>`;
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.remove();
+        });
+        document.body.appendChild(modal);
+      }
+
+      async function copyImage() {
+        if (!currentCanvas) return;
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                "image/png": new Promise((res) => currentCanvas.toBlob(res, "image/png")),
+              }),
+            ]);
+            showToast("✓ Gambar disalin ke clipboard");
+            return;
+          } catch {}
+        }
+        showCopyFallback();
+      }
+
+      function saveImage() {
+        if (!currentCanvas) return;
+        const sheet = state.sheets[currentIndex];
+        const label = sheet ? sheet.label || "sheet-" + (currentIndex + 1) : "sheet";
+        const a = document.createElement("a");
+        a.download = "sheet-" + label + "-" + new Date().toISOString().slice(0, 10) + ".png";
+        a.href = currentCanvas.toDataURL("image/png");
+        a.click();
+        showToast("✓ Gambar disimpan");
+      }
+
+      function applyCropToCanvas(sheet) {
+        let canvas = sheet.canvas;
+        if (!canvas) return null;
+        const c = sheet.crop || { mode: "none" };
+        if (c.mode === "auto") {
+          const W = canvas.width, H = canvas.height;
+          canvas = cropCanvas(
+            canvas,
+            Math.round((W * c.x) / 100),
+            Math.round((H * c.y) / 100),
+            Math.round((W * c.w) / 100),
+            Math.round((H * c.h) / 100),
+          );
+        } else if (c.mode === "manual" && c.manualRect) {
+          const mr = c.manualRect;
+          canvas = cropCanvas(canvas, mr.x, mr.y, mr.w, mr.h);
+        }
+        return canvas;
+      }
+
+      function scaleCanvasForShare(canvas, maxDim = 1600) {
+        if (!canvas) return null;
+        const { width: W, height: H } = canvas;
+        if (W <= maxDim && H <= maxDim) return canvas;
+        const ratio = Math.min(maxDim / W, maxDim / H);
+        const out = document.createElement("canvas");
+        out.width = Math.round(W * ratio);
+        out.height = Math.round(H * ratio);
+        out.getContext("2d").drawImage(canvas, 0, 0, out.width, out.height);
+        return out;
+      }
+
+      function showShareFallbackModal(entries) {
+        const existing = document.getElementById("shareAllModal");
+        if (existing) existing.remove();
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+        const hint = isIOS
+          ? "Tekan lama pada setiap gambar → <strong>Simpan ke Foto</strong>"
+          : "Klik kanan pada gambar → <strong>Simpan Gambar</strong>";
+        const modal = document.createElement("div");
+        modal.id = "shareAllModal";
+        modal.className = "img-modal-overlay";
+        const imgs = entries
+          .map(
+            ({ dataUrl, label }) =>
+              `<div style="text-align:center">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#555;margin-bottom:6px">${escHtml(label)}</div>
+                <img src="${dataUrl}" style="max-width:100%;border-radius:4px;" />
+              </div>`,
+          )
+          .join("");
+        modal.innerHTML = `
+          <p class="img-modal-hint">${hint}</p>
+          <div style="display:flex;flex-direction:column;gap:16px;overflow-y:auto;max-height:68vh;padding:4px 0">${imgs}</div>
+          <button class="img-modal-close" onclick="document.getElementById('shareAllModal').remove()">Tutup</button>`;
+        modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+      }
+
+      async function shareAll() {
+        if (!navigator.share) return;
+        saveSheetSettings();
+
+        const readySheets = state.sheets.filter((s) => s.status === "ready");
+        if (readySheets.length === 0) {
+          showToast("Tiada imej untuk dikongsi", true);
+          return;
+        }
+
+        // 1. Prepare & crop canvases synchronously (no await yet)
+        const prepared = readySheets.map((sheet, i) => ({
+          canvas: scaleCanvasForShare(applyCropToCanvas(sheet)),
+          label: sheet.label || "sheet-" + (state.sheets.indexOf(sheet) + 1),
+        }));
+
+        // 2. Convert all to blobs in parallel — one await, stays close to user gesture
+        let blobs;
+        try {
+          blobs = await Promise.all(
+            prepared.map(({ canvas }) =>
+              canvas
+                ? new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85))
+                : Promise.resolve(null),
+            ),
+          );
+        } catch {
+          showToast("Gagal jana imej", true);
+          return;
+        }
+
+        const files = blobs
+          .map((blob, i) =>
+            blob ? new File([blob], `sheet-${prepared[i].label}.jpg`, { type: "image/jpeg" }) : null,
+          )
+          .filter(Boolean);
+
+        if (!files.length) {
+          showToast("Gagal jana imej", true);
+          return;
+        }
+
+        // 3. Try native share
+        try {
+          const shareData = { files };
+          if (navigator.canShare && !navigator.canShare(shareData)) {
+            throw new Error("canShare_false");
+          }
+          await navigator.share(shareData);
+        } catch (err) {
+          if (err.name === "AbortError") return;
+          // 4. Fallback: show images in modal for long-press save
+          const entries = prepared
+            .map(({ canvas, label }) => ({
+              dataUrl: canvas ? canvas.toDataURL("image/jpeg", 0.85) : "",
+              label,
+            }))
+            .filter((e) => e.dataUrl);
+          showShareFallbackModal(entries);
+        }
+      }
+
+      // ── Init dari URL params ──
+      (function init() {
+        const p = new URLSearchParams(window.location.search);
+
+        // Format baharu: ?config=<base64url(JSON)>
+        if (p.has("config")) {
+          try {
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(p.get("config"))))));
+            if (Array.isArray(decoded) && decoded.length > 0) {
+              decoded.forEach((item) => {
+                const c = item.crop || { mode: "auto", x: 0, y: 0, w: 100, h: 100 };
+                addSheetRow(
+                  item.url || "",
+                  item.label || "",
+                  item.params || null,
+                  { mode: c.mode || "auto", x: c.x ?? 0, y: c.y ?? 0, w: c.w ?? 100, h: c.h ?? 100, manualRect: null }
+                );
+              });
+              renderSheetList();
+              updateNavUI();
+              loadAll();
+              return;
+            }
+          } catch {}
+        }
+
+        // Backward compat: ?url= (dari sheet-viewer.html)
+        if (p.has("url")) {
+          const url = p.get("url");
+          const cropParam = p.get("crop");
+          let crop = { mode: "auto", x: 0, y: 0, w: 100, h: 100, manualRect: null };
+          if (cropParam) {
+            const parts = cropParam.split(",").map(Number);
+            if (parts.length === 4)
+              crop = { mode: "auto", x: parts[0], y: parts[1], w: parts[2], h: parts[3], manualRect: null };
+          }
+          addSheetRow(url, "", null, crop);
+          renderSheetList();
+          updateNavUI();
+          loadAll();
+          return;
+        }
+
+        // Default: satu baris kosong
+        addSheetRow("", "");
+      })();
+
+      // Crop input change
+      ["cropX", "cropY", "cropW", "cropH"].forEach((id) => {
+        document.getElementById(id).addEventListener("change", () => {
+          if (cropMode === "auto" && renderedCanvas) {
+            applyCurrentCrop();
+            updateCropOverlay();
+            updateShareUrl();
+          }
+        });
+      });
+
+      window.addEventListener("resize", () => {
+        if (cropMode === "auto") updateCropOverlay();
+        else if (cropMode === "manual" && manualCropRect) showManualOverlay();
+      });
+
+      setupSwipe();
+
+      // ── Settings Modal ──
+      let modalSheetIndex = -1;
+      let modalCropMode = "auto";
+
+      function openSettingsModal(index) {
+        const sheet = state.sheets[index];
+        if (!sheet) return;
+        modalSheetIndex = index;
+
+        document.getElementById("settingsModalTitle").textContent =
+          "Tetapan — " + (sheet.label || urlShort(sheet.url));
+
+        const p = sheet.params || {};
+        document.getElementById("mPSize").value = p.size || "7";
+        document.getElementById("mPPortrait").value = p.portrait || "true";
+        document.getElementById("mPScale").value = p.scale || "1";
+        document.getElementById("mPRange").value = p.range || "";
+        document.getElementById("mMarginTop").value = p.top_margin || "";
+        document.getElementById("mMarginBottom").value = p.bottom_margin || "";
+        document.getElementById("mMarginLeft").value = p.left_margin || "";
+        document.getElementById("mMarginRight").value = p.right_margin || "";
+
+        const c = sheet.crop || { mode: "auto", x: 0, y: 0, w: 100, h: 100 };
+        document.getElementById("mCropX").value = c.x ?? 0;
+        document.getElementById("mCropY").value = c.y ?? 0;
+        document.getElementById("mCropW").value = c.w ?? 100;
+        document.getElementById("mCropH").value = c.h ?? 100;
+
+        const mr = c.manualRect;
+        document.getElementById("mCoordDisplay").textContent = mr
+          ? `X:${mr.x} Y:${mr.y} · ${mr.w}×${mr.h}px`
+          : "Tiada pilihan manual";
+
+        modalCropMode = c.mode || "auto";
+        updateModalTabUI();
+
+        document.getElementById("settingsModalOverlay").style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+
+      function updateModalTabUI() {
+        ["auto", "manual", "none"].forEach((t) => {
+          document
+            .getElementById("mTab" + t.charAt(0).toUpperCase() + t.slice(1))
+            .classList.toggle("active", t === modalCropMode);
+        });
+        document.getElementById("mAutoCropPanel").style.display =
+          modalCropMode === "auto" ? "" : "none";
+        document.getElementById("mManualCropPanel").style.display =
+          modalCropMode === "manual" ? "" : "none";
+        document.getElementById("mNoneCropPanel").style.display =
+          modalCropMode === "none" ? "" : "none";
+      }
+
+      function switchModalTab(tab) {
+        modalCropMode = tab;
+        updateModalTabUI();
+      }
+
+      function setMModalPreset(x, y, w, h) {
+        document.getElementById("mCropX").value = x;
+        document.getElementById("mCropY").value = y;
+        document.getElementById("mCropW").value = w;
+        document.getElementById("mCropH").value = h;
+      }
+
+      function setMModalMarginPreset(top, bottom, left, right) {
+        document.getElementById("mMarginTop").value = top;
+        document.getElementById("mMarginBottom").value = bottom;
+        document.getElementById("mMarginLeft").value = left;
+        document.getElementById("mMarginRight").value = right;
+      }
+
+      function closeSettingsModal(e) {
+        if (e && e.target !== document.getElementById("settingsModalOverlay")) return;
+        document.getElementById("settingsModalOverlay").style.display = "none";
+        document.body.style.overflow = "";
+      }
+
+      function applyModalSettingsToSheet() {
+        const sheet = state.sheets[modalSheetIndex];
+        if (!sheet) return false;
+        sheet.params = {
+          size: document.getElementById("mPSize").value,
+          portrait: document.getElementById("mPPortrait").value,
+          scale: document.getElementById("mPScale").value,
+          range: document.getElementById("mPRange").value.trim(),
+          top_margin: document.getElementById("mMarginTop").value.trim(),
+          bottom_margin: document.getElementById("mMarginBottom").value.trim(),
+          left_margin: document.getElementById("mMarginLeft").value.trim(),
+          right_margin: document.getElementById("mMarginRight").value.trim(),
+        };
+        sheet.crop = {
+          mode: modalCropMode,
+          x: parseFloat(document.getElementById("mCropX").value) || 0,
+          y: parseFloat(document.getElementById("mCropY").value) || 0,
+          w: parseFloat(document.getElementById("mCropW").value) || 100,
+          h: parseFloat(document.getElementById("mCropH").value) || 100,
+          manualRect: sheet.crop ? sheet.crop.manualRect : null,
+        };
+        return true;
+      }
+
+      function saveModalSettings() {
+        if (!applyModalSettingsToSheet()) return;
+        if (modalSheetIndex === currentIndex) {
+          loadSheetSettings(currentIndex);
+          if (renderedCanvas) applyCurrentCrop();
+        }
+        updateShareUrl();
+        showToast("✓ Tetapan disimpan");
+        closeSettingsModal();
+      }
+
+      async function saveAndReloadModal() {
+        if (!applyModalSettingsToSheet()) return;
+        const idx = modalSheetIndex;
+        closeSettingsModal();
+        if (idx !== currentIndex) {
+          if (uiInitialized) saveSheetSettings();
+          currentIndex = idx;
+          updateNavUI();
+        }
+        loadSheetSettings(idx);
+        await reloadSheet(idx);
+        updateShareUrl();
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (
+          e.key === "Escape" &&
+          document.getElementById("settingsModalOverlay").style.display !== "none"
+        ) {
+          closeSettingsModal();
+        }
+        if (e.key === "Escape" && document.getElementById("sinkModal").style.display !== "none") {
+          closeSinkModal();
+        }
+      });
+
+      // ── Sink Shortlink ──
+      const SINK_URL_KEY = "sink_instance_url";
+      const SINK_TOKEN_KEY = "sink_api_key";
+      const SINK_MAP_KEY = "sink_slug_map";
+      let sinkSlug = null;
+
+      function getSinkConfig() {
+        return {
+          url: (localStorage.getItem(SINK_URL_KEY) || "").replace(/\/$/, ""),
+          key: localStorage.getItem(SINK_TOKEN_KEY) || "",
+        };
+      }
+
+      function getSlugMap() {
+        try { return JSON.parse(localStorage.getItem(SINK_MAP_KEY) || "{}"); } catch { return {}; }
+      }
+
+      function saveSlugMap(map) {
+        localStorage.setItem(SINK_MAP_KEY, JSON.stringify(map));
+      }
+
+      function updateSinkBtn() {
+        const { url, key } = getSinkConfig();
+        const btn = document.getElementById("btnShorten");
+        if (btn) btn.style.display = url && key ? "" : "none";
+      }
+
+      function openSinkModal() {
+        const { url, key } = getSinkConfig();
+        document.getElementById("sinkUrlInput").value = url;
+        document.getElementById("sinkKeyInput").value = key;
+        document.getElementById("sinkModal").style.display = "flex";
+      }
+
+      function closeSinkModal() {
+        document.getElementById("sinkModal").style.display = "none";
+      }
+
+      function saveSinkModal() {
+        const url = document.getElementById("sinkUrlInput").value.trim().replace(/\/$/, "");
+        const key = document.getElementById("sinkKeyInput").value.trim();
+        url ? localStorage.setItem(SINK_URL_KEY, url) : localStorage.removeItem(SINK_URL_KEY);
+        key ? localStorage.setItem(SINK_TOKEN_KEY, key) : localStorage.removeItem(SINK_TOKEN_KEY);
+        closeSinkModal();
+        updateSinkBtn();
+        showToast(url && key ? "✓ Tetapan shortlink disimpan" : "Tetapan shortlink dipadamkan");
+      }
+
+      function clearSinkConfig() {
+        localStorage.removeItem(SINK_URL_KEY);
+        localStorage.removeItem(SINK_TOKEN_KEY);
+        localStorage.removeItem(SINK_MAP_KEY);
+        sinkSlug = null;
+        document.getElementById("sinkUrlInput").value = "";
+        document.getElementById("sinkKeyInput").value = "";
+        updateSinkBtn();
+        showToast("Tetapan shortlink dipadamkan");
+      }
+
+      async function sinkFetch(path, body, method = "POST") {
+        const { url: sinkUrl, key } = getSinkConfig();
+        if (!sinkUrl || !key) return null;
+        const proxyTarget = PROXY + "?sink_target=" + encodeURIComponent(`${sinkUrl}${path}`);
+        const opts = { method, headers: { Authorization: `Bearer ${key}` } };
+        if (method !== "GET" && body !== undefined) {
+          opts.headers["Content-Type"] = "application/json";
+          opts.body = JSON.stringify(body);
+        }
+        const resp = await fetch(proxyTarget, opts);
+        if (!resp.ok) {
+          let detail = "";
+          try { const t = await resp.text(); detail = t.slice(0, 120); } catch {}
+          throw new Error(`HTTP ${resp.status}${detail ? ": " + detail : ""}`);
+        }
+        return resp.json();
+      }
+
+      async function createShortlink() {
+        const { url: sinkUrl, key } = getSinkConfig();
+        if (!sinkUrl || !key) return;
+        const longUrl = buildShareUrl();
+        if (!longUrl) return;
+        const btn = document.getElementById("btnShorten");
+        btn.disabled = true;
+        try {
+          const map = getSlugMap();
+          const cached = map[longUrl];
+          if (cached) {
+            // Sahkan slug masih wujud dalam Sink
+            try {
+              const data = await sinkFetch(`/api/link/query?slug=${encodeURIComponent(cached)}`, undefined, "GET");
+              if (data?.link?.slug) {
+                sinkSlug = data.link.slug;
+                document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+                showToast("✓ Shortlink sedia ada");
+                return;
+              }
+            } catch {
+              delete map[longUrl];
+              saveSlugMap(map);
+            }
+          }
+          // Cipta shortlink baru
+          const slug = "gspng-" + Math.random().toString(36).slice(2, 7);
+          const data = await sinkFetch("/api/link/create", { url: longUrl, slug });
+          sinkSlug = data.link.slug;
+          map[longUrl] = sinkSlug;
+          saveSlugMap(map);
+          document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+          showToast("✓ Shortlink dijana");
+        } catch (err) {
+          showToast("Gagal: " + (err.message || "Semak URL & Token"), true);
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function upsertShortlink(longUrl) {
+        if (!sinkSlug) return;
+        const { url: sinkUrl } = getSinkConfig();
+        try {
+          await sinkFetch("/api/link/upsert", { url: longUrl, slug: sinkSlug });
+          const map = getSlugMap();
+          map[longUrl] = sinkSlug;
+          saveSlugMap(map);
+          document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+          showToast("✓ Shortlink dikemas kini");
+        } catch {
+          sinkSlug = null;
+        }
+      }
+
+      updateSinkBtn();
+    </script>
+
+    <!-- Sink Shortlink Modal -->
+    <div class="sink-modal-overlay" id="sinkModal" style="display:none"
+      onclick="if(event.target===this)closeSinkModal()">
+      <div class="sink-modal">
+        <div class="sink-modal-header">
+          <span class="sink-modal-title">Tetapan Shortlink</span>
+          <button class="sink-modal-close" onclick="closeSinkModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="sink-modal-body">
+          <p class="sink-note">Kunci API disimpan dalam peranti ini sahaja (localStorage). Tidak dihantar ke mana-mana pelayan.</p>
+          <span class="sec-label">URL Sink Instance</span>
+          <input type="text" id="sinkUrlInput" class="sink-input"
+            placeholder="https://s.yourdomain.com" autocomplete="off" />
+          <span class="sec-label" style="margin-top:8px">API Token</span>
+          <input type="password" id="sinkKeyInput" class="sink-input"
+            placeholder="••••••••••••••••" autocomplete="off" />
+        </div>
+        <div class="sink-modal-footer">
+          <button class="btn-modal-dismiss" onclick="clearSinkConfig()">Kosongkan</button>
+          <button class="btn-modal-save" onclick="saveSinkModal()">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

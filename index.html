@@ -103,10 +103,17 @@
       /* ── Cards ── */
       .cards {
         width: 100%;
-        max-width: 760px;
+        max-width: 1100px;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
         gap: 16px;
+      }
+
+      @media (max-width: 780px) {
+        .cards {
+          grid-template-columns: 1fr 1fr;
+          max-width: 760px;
+        }
       }
 
       @media (max-width: 560px) {
@@ -301,7 +308,7 @@
   <body>
     <header>
       <span class="logo">GSheet Viewer</span>
-      <span class="version">v2.0 · multi-sheet</span>
+      <span class="version">v3.0 · multi-url</span>
     </header>
 
     <section class="hero">
@@ -352,6 +359,26 @@
           <li>Render semua sheet dalam satu skrin</li>
           <li>Tetapkan crop berasingan bagi setiap sheet</li>
           <li>Sesuai untuk papan pemuka atau laporan</li>
+        </ul>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <!-- Card 3: Multi URL Sheet -->
+      <a href="multiurlnsheet.html" class="card">
+        <span class="card-badge">Berbilang Workbook</span>
+        <div class="card-icon">⊞</div>
+        <div>
+          <div class="card-title">Multi URL Sheet</div>
+          <div class="card-desc">
+            Gabungkan sheet dari workbook berbeza — setiap
+            baris adalah URL Google Sheets yang lengkap.
+          </div>
+        </div>
+        <ul class="card-features">
+          <li>Setiap sheet boleh dari spreadsheet berbeza</li>
+          <li>Tampal URL terus — auto tukar ke format eksport</li>
+          <li>Crop & tetapan PDF berasingan per sheet</li>
+          <li>URL Kongsi dikodkan (boleh bookmark)</li>
         </ul>
         <span class="card-arrow">→</span>
       </a>
