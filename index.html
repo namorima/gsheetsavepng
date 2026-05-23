@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSheet Viewer — Pilih Alat</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap");
+
+      :root {
+        --bg: #0f0f0f;
+        --surface: #1a1a1a;
+        --border: #2a2a2a;
+        --accent: #00e5a0;
+        --accent-dim: #00e5a018;
+        --accent-dim2: #00e5a030;
+        --text: #e8e8e8;
+        --text-dim: #555;
+        --radius: 6px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 28px 16px 60px;
+      }
+
+      header {
+        width: 100%;
+        max-width: 760px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 48px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .logo {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .version {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        letter-spacing: 0.06em;
+      }
+
+      /* ── Hero ── */
+      .hero {
+        width: 100%;
+        max-width: 760px;
+        text-align: center;
+        margin-bottom: 48px;
+      }
+
+      .hero-eyebrow {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+
+      .hero-title {
+        font-size: 28px;
+        font-weight: 300;
+        color: var(--text);
+        line-height: 1.3;
+        margin-bottom: 12px;
+      }
+
+      .hero-title strong {
+        font-weight: 500;
+        color: #fff;
+      }
+
+      .hero-sub {
+        font-size: 13px;
+        color: var(--text-dim);
+        line-height: 1.7;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      /* ── Cards ── */
+      .cards {
+        width: 100%;
+        max-width: 760px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      @media (max-width: 560px) {
+        .cards {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.2s, background 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card:hover {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+      }
+
+      .card:hover .card-arrow {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .card:hover .card-icon {
+        color: var(--accent);
+      }
+
+      .card-badge {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--accent);
+        background: var(--accent-dim2);
+        border: 1px solid var(--accent);
+        border-radius: 100px;
+        padding: 2px 8px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        align-self: flex-start;
+      }
+
+      .card-icon {
+        font-size: 28px;
+        line-height: 1;
+        color: var(--text-dim);
+        transition: color 0.2s;
+      }
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 500;
+        color: #fff;
+        margin-bottom: 4px;
+      }
+
+      .card-desc {
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.6;
+      }
+
+      .card-features {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .card-features li {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .card-features li::before {
+        content: "";
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex-shrink: 0;
+      }
+
+      .card-arrow {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 16px;
+        color: var(--accent);
+        opacity: 0;
+        transform: translateX(-6px);
+        transition: opacity 0.2s, transform 0.2s;
+      }
+
+      /* ── How it works ── */
+      .how {
+        width: 100%;
+        max-width: 760px;
+        margin-top: 48px;
+        border-top: 1px solid var(--border);
+        padding-top: 32px;
+      }
+
+      .how-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      @media (max-width: 480px) {
+        .steps {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .step {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .step-num {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--accent);
+      }
+
+      .step-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text);
+      }
+
+      .step-body {
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.6;
+      }
+
+      /* ── Prereq note ── */
+      .prereq {
+        width: 100%;
+        max-width: 760px;
+        margin-top: 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        font-size: 12px;
+        color: var(--text-dim);
+        line-height: 1.7;
+      }
+
+      .prereq strong {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      footer {
+        margin-top: 60px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        letter-spacing: 0.06em;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="logo">GSheet Viewer</span>
+      <span class="version">v2.0 · multi-sheet</span>
+    </header>
+
+    <section class="hero">
+      <p class="hero-eyebrow">Google Sheets → PNG</p>
+      <h1 class="hero-title">
+        Tukar <strong>eksport Google Sheets</strong><br />kepada imej PNG dalam sekelip mata
+      </h1>
+      <p class="hero-sub">
+        Ambil mana-mana sheet awam, render sebagai gambar, crop ikut keperluan,
+        dan terus salin atau kongsi ke WhatsApp, Telegram &amp; mana-mana aplikasi.
+      </p>
+    </section>
+
+    <div class="cards">
+      <!-- Card 1: Sheet Viewer -->
+      <a href="sheet-viewer.html" class="card">
+        <span class="card-badge">Asas</span>
+        <div class="card-icon">◻</div>
+        <div>
+          <div class="card-title">Sheet Viewer</div>
+          <div class="card-desc">
+            Papar satu sheet pada satu masa. Terbaik untuk crop
+            tepat dan eksport imej tunggal.
+          </div>
+        </div>
+        <ul class="card-features">
+          <li>Crop Auto (%) atau Manual (seret)</li>
+          <li>Salin / Simpan / Kongsi sebagai PNG</li>
+          <li>URL Builder — bina URL eksport mudah</li>
+          <li>URL Kongsi boleh bookmark</li>
+        </ul>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <!-- Card 2: Multi Sheet -->
+      <a href="multisheet.html" class="card">
+        <span class="card-badge">Berbilang Sheet</span>
+        <div class="card-icon">◫</div>
+        <div>
+          <div class="card-title">Multi Sheet</div>
+          <div class="card-desc">
+            Tambah berbilang sheet sekaligus dan paparkan
+            semua dalam satu pandangan.
+          </div>
+        </div>
+        <ul class="card-features">
+          <li>Urus senarai sheet (tambah / padam)</li>
+          <li>Render semua sheet dalam satu skrin</li>
+          <li>Tetapkan crop berasingan bagi setiap sheet</li>
+          <li>Sesuai untuk papan pemuka atau laporan</li>
+        </ul>
+        <span class="card-arrow">→</span>
+      </a>
+    </div>
+
+    <!-- How it works -->
+    <div class="how">
+      <p class="how-label">Cara Guna</p>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">01</span>
+          <div class="step-title">Tetapkan Sheet sebagai Awam</div>
+          <div class="step-body">
+            Dalam Google Sheets, klik <em>Kongsi → Tukar kepada sesiapa sahaja
+            dengan pautan</em>. Sheet mesti boleh diakses tanpa log masuk.
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <div class="step-title">Tampal URL &amp; Muat</div>
+          <div class="step-body">
+            Tampal URL spreadsheet atau URL eksport ke dalam alat yang dipilih.
+            Gunakan URL Builder jika tidak pasti format URL yang betul.
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <div class="step-title">Crop, Salin &amp; Kongsi</div>
+          <div class="step-body">
+            Pilih kawasan crop yang dikehendaki, kemudian salin gambar ke
+            clipboard atau kongsi terus ke WhatsApp, Telegram, dan lain-lain.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prereq">
+      <strong>Prasyarat:</strong> Google Sheets <strong>mesti ditetapkan sebagai awam</strong>
+      (boleh diakses sesiapa dengan pautan) — alat ini tidak boleh log masuk ke Google.
+      Data peribadi / sulit jangan dikongsi secara awam.
+    </div>
+
+    <footer>gsheetproxy.uncle.workers.dev · Cloudflare Workers + PDF.js</footer>
+  </body>
+</html>
