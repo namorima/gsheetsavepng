@@ -3121,7 +3121,7 @@
 
         // 3. Try native share
         try {
-          const shareData = { files, title: "Sheet Viewer" };
+          const shareData = { files };
           if (navigator.canShare && !navigator.canShare(shareData)) {
             throw new Error("canShare_false");
           }
