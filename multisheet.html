@@ -1326,6 +1326,105 @@
       .modal-manual-note strong {
         color: var(--accent);
       }
+
+      /* ── Sink Shortlink Modal ── */
+      .sink-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+        z-index: 500;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0;
+      }
+      @media (min-height: 520px) {
+        .sink-modal-overlay {
+          align-items: center;
+          padding: 16px;
+        }
+      }
+      .sink-modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px 10px 0 0;
+        width: 100%;
+        max-width: 420px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      @media (min-height: 520px) {
+        .sink-modal {
+          border-radius: 10px;
+          animation: fadeScale 0.2s ease;
+        }
+      }
+      .sink-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .sink-modal-title {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        color: var(--text);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .sink-modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+      }
+      .sink-modal-close:hover { color: var(--text); }
+      .sink-modal-close svg { width: 16px; height: 16px; }
+      .sink-modal-body {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .sink-note {
+        font-size: 11px;
+        color: var(--text-dim);
+        line-height: 1.6;
+        background: var(--accent-dim);
+        border-left: 2px solid var(--accent);
+        padding: 8px 10px;
+        border-radius: 3px;
+        margin-bottom: 6px;
+      }
+      .sink-input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 12px;
+        color: var(--text);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .sink-input:focus { border-color: var(--accent); }
+      .sink-input::placeholder { color: var(--text-dim); }
+      .sink-modal-footer {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body>
@@ -1758,6 +1857,19 @@
             readonly
             placeholder="Muatkan imej dahulu..."
           />
+          <button class="btn-icon" onclick="openSinkModal()" title="Tetapan Shortlink (Sink)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+          </button>
+          <button class="btn-icon" id="btnShorten" onclick="createShortlink()"
+            title="Jana shortlink" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+          </button>
           <button class="btn-primary" onclick="copyShareUrl()" style="padding: 9px 14px">
             SALIN
           </button>
@@ -2953,9 +3065,15 @@
       function updateShareUrl() {
         const url = buildShareUrl();
         if (!url) return;
-        document.getElementById("shareUrlInput").value = url;
         document.getElementById("shareSection").style.display = "block";
         updateGidCount();
+        if (sinkSlug) {
+          const { url: sinkUrl } = getSinkConfig();
+          document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+          upsertShortlink(url);
+        } else {
+          document.getElementById("shareUrlInput").value = url;
+        }
       }
 
       async function copyShareUrl() {
@@ -3397,7 +3515,173 @@
         ) {
           closeSettingsModal();
         }
+        if (e.key === "Escape" && document.getElementById("sinkModal").style.display !== "none") {
+          closeSinkModal();
+        }
       });
+
+      // ── Sink Shortlink ──
+      const SINK_URL_KEY = "sink_instance_url";
+      const SINK_TOKEN_KEY = "sink_api_key";
+      const SINK_MAP_KEY = "sink_slug_map";
+      let sinkSlug = null;
+
+      function getSinkConfig() {
+        return {
+          url: (localStorage.getItem(SINK_URL_KEY) || "").replace(/\/$/, ""),
+          key: localStorage.getItem(SINK_TOKEN_KEY) || "",
+        };
+      }
+
+      function getSlugMap() {
+        try { return JSON.parse(localStorage.getItem(SINK_MAP_KEY) || "{}"); } catch { return {}; }
+      }
+
+      function saveSlugMap(map) {
+        localStorage.setItem(SINK_MAP_KEY, JSON.stringify(map));
+      }
+
+      function updateSinkBtn() {
+        const { url, key } = getSinkConfig();
+        const btn = document.getElementById("btnShorten");
+        if (btn) btn.style.display = url && key ? "" : "none";
+      }
+
+      function openSinkModal() {
+        const { url, key } = getSinkConfig();
+        document.getElementById("sinkUrlInput").value = url;
+        document.getElementById("sinkKeyInput").value = key;
+        document.getElementById("sinkModal").style.display = "flex";
+      }
+
+      function closeSinkModal() {
+        document.getElementById("sinkModal").style.display = "none";
+      }
+
+      function saveSinkModal() {
+        const url = document.getElementById("sinkUrlInput").value.trim().replace(/\/$/, "");
+        const key = document.getElementById("sinkKeyInput").value.trim();
+        url ? localStorage.setItem(SINK_URL_KEY, url) : localStorage.removeItem(SINK_URL_KEY);
+        key ? localStorage.setItem(SINK_TOKEN_KEY, key) : localStorage.removeItem(SINK_TOKEN_KEY);
+        closeSinkModal();
+        updateSinkBtn();
+        showToast(url && key ? "✓ Tetapan shortlink disimpan" : "Tetapan shortlink dipadamkan");
+      }
+
+      function clearSinkConfig() {
+        localStorage.removeItem(SINK_URL_KEY);
+        localStorage.removeItem(SINK_TOKEN_KEY);
+        localStorage.removeItem(SINK_MAP_KEY);
+        sinkSlug = null;
+        document.getElementById("sinkUrlInput").value = "";
+        document.getElementById("sinkKeyInput").value = "";
+        updateSinkBtn();
+        showToast("Tetapan shortlink dipadamkan");
+      }
+
+      async function sinkFetch(path, body, method = "POST") {
+        const { url: sinkUrl, key } = getSinkConfig();
+        if (!sinkUrl || !key) return null;
+        const proxyTarget = PROXY + "?sink_target=" + encodeURIComponent(`${sinkUrl}${path}`);
+        const opts = { method, headers: { Authorization: `Bearer ${key}` } };
+        if (method !== "GET" && body !== undefined) {
+          opts.headers["Content-Type"] = "application/json";
+          opts.body = JSON.stringify(body);
+        }
+        const resp = await fetch(proxyTarget, opts);
+        if (!resp.ok) {
+          let detail = "";
+          try { const t = await resp.text(); detail = t.slice(0, 120); } catch {}
+          throw new Error(`HTTP ${resp.status}${detail ? ": " + detail : ""}`);
+        }
+        return resp.json();
+      }
+
+      async function createShortlink() {
+        const { url: sinkUrl, key } = getSinkConfig();
+        if (!sinkUrl || !key) return;
+        const longUrl = buildShareUrl();
+        if (!longUrl) return;
+        const btn = document.getElementById("btnShorten");
+        btn.disabled = true;
+        try {
+          const map = getSlugMap();
+          const cached = map[longUrl];
+          if (cached) {
+            // Sahkan slug masih wujud dalam Sink
+            try {
+              const data = await sinkFetch(`/api/link/query?slug=${encodeURIComponent(cached)}`, undefined, "GET");
+              if (data?.link?.slug) {
+                sinkSlug = data.link.slug;
+                document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+                showToast("✓ Shortlink sedia ada");
+                return;
+              }
+            } catch {
+              delete map[longUrl];
+              saveSlugMap(map);
+            }
+          }
+          // Cipta shortlink baru
+          const slug = "gspng-" + Math.random().toString(36).slice(2, 7);
+          const data = await sinkFetch("/api/link/create", { url: longUrl, slug });
+          sinkSlug = data.link.slug;
+          map[longUrl] = sinkSlug;
+          saveSlugMap(map);
+          document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+          showToast("✓ Shortlink dijana");
+        } catch (err) {
+          showToast("Gagal: " + (err.message || "Semak URL & Token"), true);
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function upsertShortlink(longUrl) {
+        if (!sinkSlug) return;
+        const { url: sinkUrl } = getSinkConfig();
+        try {
+          await sinkFetch("/api/link/upsert", { url: longUrl, slug: sinkSlug });
+          const map = getSlugMap();
+          map[longUrl] = sinkSlug;
+          saveSlugMap(map);
+          document.getElementById("shareUrlInput").value = `${sinkUrl}/${sinkSlug}`;
+          showToast("✓ Shortlink dikemas kini");
+        } catch {
+          sinkSlug = null;
+        }
+      }
+
+      updateSinkBtn();
     </script>
+
+    <!-- Sink Shortlink Modal -->
+    <div class="sink-modal-overlay" id="sinkModal" style="display:none"
+      onclick="if(event.target===this)closeSinkModal()">
+      <div class="sink-modal">
+        <div class="sink-modal-header">
+          <span class="sink-modal-title">Tetapan Shortlink</span>
+          <button class="sink-modal-close" onclick="closeSinkModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="sink-modal-body">
+          <p class="sink-note">Kunci API disimpan dalam peranti ini sahaja (localStorage). Tidak dihantar ke mana-mana pelayan.</p>
+          <span class="sec-label">URL Sink Instance</span>
+          <input type="text" id="sinkUrlInput" class="sink-input"
+            placeholder="https://s.yourdomain.com" autocomplete="off" />
+          <span class="sec-label" style="margin-top:8px">API Token</span>
+          <input type="password" id="sinkKeyInput" class="sink-input"
+            placeholder="••••••••••••••••" autocomplete="off" />
+        </div>
+        <div class="sink-modal-footer">
+          <button class="btn-modal-dismiss" onclick="clearSinkConfig()">Kosongkan</button>
+          <button class="btn-modal-save" onclick="saveSinkModal()">Simpan</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
