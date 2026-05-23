@@ -4,23 +4,24 @@ Alat untuk menukar eksport Google Sheets (format PDF) kepada imej PNG, dengan so
 
 ## Gambaran Keseluruhan
 
-Projek ini terdiri daripada empat fail utama:
+Projek ini terdiri daripada fail-fail utama berikut:
 
 1. **`workers.js`** — Cloudflare Worker proksi CORS untuk Google Sheets & Sink API.
-2. **`index.html`** — Landing page dengan navigasi ke dua alat utama.
+2. **`index.html`** — Landing page dengan navigasi ke tiga alat utama.
 3. **`sheet-viewer.html`** — Viewer satu sheet: crop, share URL, shortlink, kongsi PNG.
-4. **`multisheet.html`** — Viewer berbilang sheet sekaligus dalam satu pandangan.
+4. **`multisheet.html`** — Viewer berbilang sheet dari satu spreadsheet yang sama.
+5. **`multiurlnsheet.html`** — Viewer berbilang sheet dari workbook/spreadsheet berbeza (setiap baris = URL penuh).
 
 ## Senibina
 
 ```
 Browser → index.html
             ↓ pilih alat
-       sheet-viewer.html  /  multisheet.html
+  sheet-viewer.html  /  multisheet.html  /  multiurlnsheet.html
             ↓ fetch PDF / Sink API
        Cloudflare Worker (gsheetproxy.uncle.workers.dev)
-            ├─ ?url=<gsheet>   → proxy ke docs.google.com
-            └─ ?sink_target=<url> → proxy ke Sink instance
+            ├─ ?url=<gsheet>        → proxy ke docs.google.com
+            └─ ?sink_target=<url>  → proxy ke Sink instance
 ```
 
 - Worker URL dikodkan keras: `https://gsheetproxy.uncle.workers.dev`
@@ -38,23 +39,31 @@ Browser → index.html
 
 ## Cara Guna
 
-1. Buka `index.html` → pilih **Sheet Viewer** atau **Multi Sheet**
+1. Buka `index.html` → pilih alat yang sesuai
 2. Masukkan URL eksport Google Sheets (atau guna URL Builder)
 3. Pilih mod crop → tekan **MUAT**
 4. Salin, simpan, atau kongsi gambar sebagai PNG
 
-### Parameter URL (sheet-viewer.html)
+### Parameter URL
 
+**sheet-viewer.html:**
 ```
 sheet-viewer.html?url=<URL_ENCODED>&crop=x,y,w,h
 ```
 - `crop` dalam peratusan (%) — format: `x,y,lebar,tinggi`
 - Contoh: `&crop=0,50,100,50` → separuh bawah gambar
 
+**multiurlnsheet.html:**
+```
+multiurlnsheet.html?config=<base64url(JSON)>
+```
+- `config` adalah array JSON di-encode dalam Base64 — mengandungi `url`, `label`, `crop`, `params` per sheet
+- Backward-compat: `?url=<URL>&crop=x,y,w,h` masih disokong
+
 ## Ciri-ciri
 
 ### index.html
-- Landing page dengan 2 kad navigasi (Sheet Viewer, Multi Sheet)
+- Landing page dengan **3 kad navigasi** (Sheet Viewer, Multi Sheet, Multi URL Sheet)
 - 3 langkah cara guna + nota prasyarat (sheet mesti awam)
 
 ### URL Builder *(collapsed by default — sheet-viewer.html)*
@@ -94,12 +103,22 @@ sheet-viewer.html?url=<URL_ENCODED>&crop=x,y,w,h
   - Blob disiapkan secara selari (Promise.all) untuk kekalkan gesture timing
 
 ### Multi Sheet (multisheet.html)
-- Tambah berbilang sheet dengan URL eksport masing-masing
+- Satu spreadsheet, berbilang GID/sheet tab
 - Senarai SHEET (GID) collapsed by default, ada count badge
 - Checkbox per sheet — pilih sheet mana yang dimasukkan dalam share URL
 - Render semua sheet dalam satu pandangan
 - Tetapkan crop berasingan bagi setiap sheet
 - **Kongsi Semua** — share semua sheet aktif sebagai satu sesi share
+
+### Multi URL Sheet (multiurlnsheet.html)
+- **Setiap baris = URL Google Sheets yang lengkap** — boleh dari workbook/spreadsheet berbeza
+- Input URL per baris → `normalizeToExportUrl()` auto-tukar ke format eksport PDF
+- **Nama sheet** per baris — field label pilihan untuk kenalpasti setiap sheet
+- Paste button per baris — terus tampal dari clipboard
+- Checkbox per sheet — toggle aktif/nyahaktif untuk share URL
+- Tetapan crop berasingan per sheet (via modal ⚙)
+- Share URL dikodkan sebagai `?config=<base64(JSON)>` — boleh bookmark
+- Backward-compat dengan `?url=&crop=` dari format lama
 
 ## Struktur JavaScript
 
@@ -134,6 +153,40 @@ Fungsi utama sama, tambahan:
 | `shareAll()` | Kongsi semua sheet aktif sebagai PNG |
 | `onEnabledChange(idx)` | Toggle checkbox sheet → kemas kini share URL |
 | `toggleGidList()` | Expand/collapse senarai GID |
+
+### multiurlnsheet.html
+Fungsi utama sama dengan multisheet.html, perbezaan dan tambahan:
+| Fungsi | Tujuan |
+|---|---|
+| `normalizeToExportUrl(raw, params)` | Tukar mana-mana URL Google Sheets ke format eksport PDF |
+| `urlShort(url)` | Jana label pendek dari URL (8 char ID) untuk display |
+| `pasteRowUrl(index)` | Tampal URL dari clipboard ke row tertentu |
+| `addSheetRow(url, label, params, crop)` | Tambah baris sheet baharu dengan semua tetapan |
+| `onSheetChange(index, field, value)` | Update sebarang field pada sheet (url, label, dll.) |
+| `buildShareUrl()` | Encode state aktif ke `?config=<base64(JSON)>` |
+| `renderSheetList()` | Render semua baris termasuk URL input + nama sheet |
+
+#### normalizeToExportUrl(raw, params)
+```js
+// Tukar apa-apa bentuk URL Google Sheets ke URL eksport PDF
+// raw boleh jadi: URL /edit, URL /export sedia ada, atau ID sheet
+// Ekstrak gid dari ?gid= atau #gid= secara automatik
+// params: { size, portrait, scale, range, top_margin, ... }
+```
+
+#### Format config JSON (share URL)
+```json
+[
+  {
+    "url": "https://docs.google.com/spreadsheets/d/.../edit?gid=0",
+    "label": "Nama Sheet (pilihan)",
+    "crop": { "mode": "auto", "x": 0, "y": 0, "w": 100, "h": 100 },
+    "params": { "size": "", "portrait": "", "scale": "", "range": "", ... }
+  }
+]
+```
+Di-encode: `btoa(unescape(encodeURIComponent(JSON.stringify(config))))`
+Di-decode: `JSON.parse(decodeURIComponent(escape(atob(encoded))))`
 
 ## workers.js — Mod Operasi
 
@@ -176,6 +229,8 @@ Fungsi utama sama, tambahan:
 - **iOS share**: Blob disiapkan secara selari sebelum `navigator.share()` dipanggil — kekalkan user gesture timing
 - **Sink slug prefix**: `gspng-` + 5 char rawak — contoh: `gspng-x7k2m`
 - **Slug dedup flow**: cache hit → verify API → return existing / create new
+- **URL normalize**: `normalizeToExportUrl()` skip jika URL sudah mengandungi `/export` — selamat untuk panggil berulang kali
+- **Base64 encode**: guna `btoa(unescape(encodeURIComponent(...)))` untuk handle Unicode dalam JSON config
 
 ## Batasan Semasa
 
@@ -192,8 +247,16 @@ Fungsi utama sama, tambahan:
 ## Fail
 
 ```
-workers.js          # Cloudflare Worker (proksi CORS + Sink)
-index.html          # Landing page — navigasi ke dua alat
-sheet-viewer.html   # Viewer satu sheet (HTML + CSS + JS)
-multisheet.html     # Viewer berbilang sheet (HTML + CSS + JS)
+workers.js              # Cloudflare Worker (proksi CORS + Sink)
+index.html              # Landing page — navigasi ke tiga alat
+sheet-viewer.html       # Viewer satu sheet (HTML + CSS + JS)
+multisheet.html         # Viewer berbilang sheet, satu spreadsheet
+multiurlnsheet.html     # Viewer berbilang sheet, pelbagai workbook
+memory/
+  MEMORY.md             # Indeks memori AI
+  project_overview.md
+  workers_js_modes.md
+  sink_shortlink_feature.md
+  ios_share_fix.md
+  tutorial_sink_shortlink.md
 ```
