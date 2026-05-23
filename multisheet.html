@@ -260,6 +260,92 @@
         background: var(--danger);
       }
 
+      /* Checkbox tick */
+      .gid-check {
+        width: 15px;
+        height: 15px;
+        flex-shrink: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        cursor: pointer;
+        position: relative;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .gid-check:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .gid-check:checked::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 1px;
+        width: 4px;
+        height: 8px;
+        border: 1.5px solid #000;
+        border-top: none;
+        border-left: none;
+        transform: rotate(45deg);
+      }
+      .gid-row.disabled .gid-input,
+      .gid-row.disabled .gid-label-input {
+        opacity: 0.35;
+      }
+
+      /* GID list collapse */
+      .gid-list-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .gid-count {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--accent);
+        background: var(--accent-dim);
+        border: 1px solid var(--accent);
+        border-radius: 100px;
+        padding: 1px 7px;
+        letter-spacing: 0.04em;
+      }
+      .gid-list-header-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .btn-gid-toggle {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-dim);
+        transition: color 0.15s, border-color 0.15s;
+      }
+      .btn-gid-toggle:hover {
+        color: var(--text);
+        border-color: #444;
+      }
+      .btn-gid-toggle svg {
+        width: 14px;
+        height: 14px;
+        transition: transform 0.2s;
+      }
+      .btn-gid-toggle.open svg {
+        transform: rotate(180deg);
+      }
+      .gid-list-wrap {
+        display: none;
+        margin-top: 6px;
+      }
+
       @keyframes pulse {
         0%,
         100% {
@@ -1277,16 +1363,27 @@
 
         <div>
           <div class="gid-list-header">
-            <span class="sec-label" style="margin: 0">Sheet (GID)</span>
-            <button class="btn-icon" onclick="addSheetRow()" title="Tambah sheet">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
+            <div class="gid-list-header-left">
+              <span class="sec-label" style="margin: 0">Sheet (GID)</span>
+              <span class="gid-count" id="gidCount">0/0</span>
+            </div>
+            <div class="gid-list-header-right">
+              <button class="btn-icon" onclick="addSheetRow()" title="Tambah sheet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <button class="btn-gid-toggle" id="btnGidToggle" onclick="toggleGidList()" title="Kembang / Runtuh senarai">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div style="height: 6px"></div>
-          <div class="gid-list" id="gidList"></div>
+          <div class="gid-list-wrap" id="gidListWrap">
+            <div class="gid-list" id="gidList"></div>
+          </div>
         </div>
 
         <div class="sheet-input-footer">
@@ -2107,6 +2204,7 @@
         state.sheets.push({
           gid,
           label,
+          enabled: true,
           status: "idle",
           canvas: null,
           errorMsg: null,
@@ -2146,14 +2244,43 @@
         updateShareUrl();
       }
 
+      function onEnabledChange(index, checked) {
+        if (state.sheets[index]) {
+          state.sheets[index].enabled = checked;
+          const row = document.getElementById("gidList").children[index];
+          if (row) row.className = "gid-row" + (checked ? "" : " disabled");
+        }
+        updateGidCount();
+        updateShareUrl();
+      }
+
+      let gidListOpen = false;
+
+      function toggleGidList() {
+        gidListOpen = !gidListOpen;
+        document.getElementById("gidListWrap").style.display = gidListOpen ? "block" : "none";
+        const btn = document.getElementById("btnGidToggle");
+        if (btn) btn.classList.toggle("open", gidListOpen);
+      }
+
+      function updateGidCount() {
+        const total = state.sheets.length;
+        const enabled = state.sheets.filter((s) => s.enabled !== false).length;
+        const el = document.getElementById("gidCount");
+        if (el) el.textContent = total === 0 ? "0" : `${enabled}/${total}`;
+      }
+
       function renderSheetList() {
         const list = document.getElementById("gidList");
         list.innerHTML = "";
         state.sheets.forEach((sheet, i) => {
           const row = document.createElement("div");
-          row.className = "gid-row";
+          const isEnabled = sheet.enabled !== false;
+          row.className = "gid-row" + (isEnabled ? "" : " disabled");
           const statusClass = sheet.status === "idle" ? "" : sheet.status;
           row.innerHTML = `
+            <input type="checkbox" class="gid-check" ${isEnabled ? "checked" : ""}
+              onchange="onEnabledChange(${i}, this.checked)" title="Sertakan dalam URL Kongsi" />
             <span class="gid-num">#${i + 1}</span>
             <input class="gid-input" type="text" placeholder="gid (cth: 0)"
               value="${escHtml(sheet.gid)}"
@@ -2181,6 +2308,7 @@
             </button>`;
           list.appendChild(row);
         });
+        updateGidCount();
       }
 
       function escHtml(str) {
@@ -2787,7 +2915,9 @@
         if (uiInitialized) saveSheetSettings();
         const base = window.location.origin + window.location.pathname;
 
-        const sheetsStr = state.sheets
+        const activeSheets = state.sheets.filter((s) => s.enabled !== false);
+
+        const sheetsStr = activeSheets
           .map((s) => {
             const lbl = (s.label || "").replace(/[:|]/g, "");
             const c = s.crop || { mode: "auto", x: 0, y: 0, w: 100, h: 100 };
@@ -2797,7 +2927,7 @@
           .join("|");
 
         // Per-sheet PDF params: size;portrait;scale;range;mTop;mBottom;mLeft;mRight
-        const sparamsStr = state.sheets
+        const sparamsStr = activeSheets
           .map((s) => {
             const p = s.params || {};
             return [
@@ -2825,6 +2955,7 @@
         if (!url) return;
         document.getElementById("shareUrlInput").value = url;
         document.getElementById("shareSection").style.display = "block";
+        updateGidCount();
       }
 
       async function copyShareUrl() {
@@ -2887,52 +3018,124 @@
         showToast("✓ Gambar disimpan");
       }
 
+      function applyCropToCanvas(sheet) {
+        let canvas = sheet.canvas;
+        if (!canvas) return null;
+        const c = sheet.crop || { mode: "none" };
+        if (c.mode === "auto") {
+          const W = canvas.width, H = canvas.height;
+          canvas = cropCanvas(
+            canvas,
+            Math.round((W * c.x) / 100),
+            Math.round((H * c.y) / 100),
+            Math.round((W * c.w) / 100),
+            Math.round((H * c.h) / 100),
+          );
+        } else if (c.mode === "manual" && c.manualRect) {
+          const mr = c.manualRect;
+          canvas = cropCanvas(canvas, mr.x, mr.y, mr.w, mr.h);
+        }
+        return canvas;
+      }
+
+      function scaleCanvasForShare(canvas, maxDim = 1600) {
+        if (!canvas) return null;
+        const { width: W, height: H } = canvas;
+        if (W <= maxDim && H <= maxDim) return canvas;
+        const ratio = Math.min(maxDim / W, maxDim / H);
+        const out = document.createElement("canvas");
+        out.width = Math.round(W * ratio);
+        out.height = Math.round(H * ratio);
+        out.getContext("2d").drawImage(canvas, 0, 0, out.width, out.height);
+        return out;
+      }
+
+      function showShareFallbackModal(entries) {
+        const existing = document.getElementById("shareAllModal");
+        if (existing) existing.remove();
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+        const hint = isIOS
+          ? "Tekan lama pada setiap gambar → <strong>Simpan ke Foto</strong>"
+          : "Klik kanan pada gambar → <strong>Simpan Gambar</strong>";
+        const modal = document.createElement("div");
+        modal.id = "shareAllModal";
+        modal.className = "img-modal-overlay";
+        const imgs = entries
+          .map(
+            ({ dataUrl, label }) =>
+              `<div style="text-align:center">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#555;margin-bottom:6px">${escHtml(label)}</div>
+                <img src="${dataUrl}" style="max-width:100%;border-radius:4px;" />
+              </div>`,
+          )
+          .join("");
+        modal.innerHTML = `
+          <p class="img-modal-hint">${hint}</p>
+          <div style="display:flex;flex-direction:column;gap:16px;overflow-y:auto;max-height:68vh;padding:4px 0">${imgs}</div>
+          <button class="img-modal-close" onclick="document.getElementById('shareAllModal').remove()">Tutup</button>`;
+        modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+      }
+
       async function shareAll() {
         if (!navigator.share) return;
         saveSheetSettings();
+
         const readySheets = state.sheets.filter((s) => s.status === "ready");
         if (readySheets.length === 0) {
           showToast("Tiada imej untuk dikongsi", true);
           return;
         }
 
-        const files = [];
-        for (const sheet of readySheets) {
-          let canvas = sheet.canvas;
-          const c = sheet.crop || { mode: "none" };
-          if (c.mode === "auto" && canvas) {
-            const W = canvas.width,
-              H = canvas.height;
-            canvas = cropCanvas(
-              canvas,
-              Math.round((W * c.x) / 100),
-              Math.round((H * c.y) / 100),
-              Math.round((W * c.w) / 100),
-              Math.round((H * c.h) / 100),
-            );
-          }
-          if (canvas) {
-            const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.92));
-            if (blob) {
-              const lbl = sheet.label || "gid-" + sheet.gid;
-              files.push(new File([blob], `sheet-${lbl}.jpg`, { type: "image/jpeg" }));
-            }
-          }
+        // 1. Prepare & crop canvases synchronously (no await yet)
+        const prepared = readySheets.map((sheet) => ({
+          canvas: scaleCanvasForShare(applyCropToCanvas(sheet)),
+          label: sheet.label || "gid-" + sheet.gid,
+        }));
+
+        // 2. Convert all to blobs in parallel — one await, stays close to user gesture
+        let blobs;
+        try {
+          blobs = await Promise.all(
+            prepared.map(({ canvas }) =>
+              canvas
+                ? new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85))
+                : Promise.resolve(null),
+            ),
+          );
+        } catch {
+          showToast("Gagal jana imej", true);
+          return;
         }
+
+        const files = blobs
+          .map((blob, i) =>
+            blob ? new File([blob], `sheet-${prepared[i].label}.jpg`, { type: "image/jpeg" }) : null,
+          )
+          .filter(Boolean);
 
         if (!files.length) {
           showToast("Gagal jana imej", true);
           return;
         }
+
+        // 3. Try native share
         try {
-          const shareData = { files };
+          const shareData = { files, title: "Sheet Viewer" };
           if (navigator.canShare && !navigator.canShare(shareData)) {
-            showToast("Peranti tidak sokong kongsi fail", true);
-            return;
+            throw new Error("canShare_false");
           }
           await navigator.share(shareData);
         } catch (err) {
-          if (err.name !== "AbortError") showToast("Gagal kongsi", true);
+          if (err.name === "AbortError") return;
+          // 4. Fallback: show images in modal for long-press save
+          const entries = prepared
+            .map(({ canvas, label }) => ({
+              dataUrl: canvas ? canvas.toDataURL("image/jpeg", 0.85) : "",
+              label,
+            }))
+            .filter((e) => e.dataUrl);
+          showShareFallbackModal(entries);
         }
       }
 
@@ -3011,6 +3214,7 @@
               return {
                 gid,
                 label,
+                enabled: true,
                 status: "idle",
                 canvas: null,
                 errorMsg: null,
